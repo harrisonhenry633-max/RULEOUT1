@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>RULEOUT</title>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+
+<style>
+:root{
+ --bg:#050b1a;
+ --panel:#0b1630;
+ --card:#0f1f45;
+ --text:#e8f0ff;
+ --muted:#8fa6ff;
+ --accent:#3b82f6;
+ --accent-soft:#60a5fa;
+ --danger:#fb7185;
+}
+
+*{box-sizing:border-box}
+
+body{
+ margin:0;
+ height:100vh;
+ font-family:system-ui,-apple-system,Segoe UI,sans-serif;
+ background:radial-gradient(1000px 600px at top,#0f2a66,var(--bg));
+ color:var(--text);
+ overflow:hidden;
+}
+
+/* START */
+.start{
+ position:fixed;
+ inset:0;
+ display:flex;
+ flex-direction:column;
+ align-items:center;
+ justify-content:center;
+ gap:26px;
+ background:radial-gradient(900px 500px at center,#123a8c,#050b1a);
+}
+
+.start h1{
+ font-size:68px;
+ letter-spacing:.35em;
+}
+
+.start p{
+ max-width:560px;
+ text-align:center;
+ color:var(--muted);
+ font-size:18px;
+}
+
+.start button{
+ padding:18px 66px;
+ font-size:22px;
+ border:none;
+ border-radius:999px;
+ cursor:pointer;
+ font-weight:800;
+}
+
+.start #startPlayBtn{
+ background:linear-gradient(135deg,var(--accent),var(--accent-soft));
+ color:white;
+}
+
+/* GAME */
+.game{display:none;padding:42px}
+
+.container{
+ max-width:1100px;
+ margin:0 auto;
+ display:grid;
+ grid-template-columns:1.3fr .7fr;
+ gap:44px;
+}
+
+.card{
+ background:linear-gradient(180deg,var(--card),var(--panel));
+ padding:34px;
+ border-radius:24px;
+ box-shadow:0 32px 64px rgba(0,0,0,.45);
+}
+
+.clue{
+ font-size:19px;
+ margin-bottom:16px;
+}
+
+.constraints{
+ color:var(--danger);
+ line-height:1.8;
+ font-size:15px;
+ margin-bottom:26px;
+}
+
+.counter{
+ font-size:34px;
+ font-weight:900;
+ color:var(--accent-soft);
+}
+
+/* INPUT */
+input{
+ width:100%;
+ padding:18px;
+ font-size:20px;
+ border-radius:16px;
+ border:none;
+ outline:none;
+ background:#020617;
+ color:var(--text);
+ text-align:center;
+}
+
+button{
+ width:100%;
+ padding:18px;
+ margin-top:16px;
+ border-radius:16px;
+ border:none;
+ font-weight:900;
+ cursor:pointer;
+}
+
+.submit{background:var(--accent);color:white}
+.next{background:#1e293b;color:var(--muted);display:none}
+
+.message{
+ margin-top:20px;
+ min-height:32px;
+ text-align:center;
+ font-size:16px;
+}
+
+/* CORRECT FLASH */
+.flash{
+ position:fixed;
+ inset:0;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ font-size:84px;
+ font-weight:900;
+ letter-spacing:.25em;
+ background:rgba(59,130,246,.28);
+ backdrop-filter:blur(6px);
+ animation:pop .9s ease forwards;
+}
+
+@keyframes pop{
+ 0%{opacity:0;transform:scale(.6)}
+ 20%{opacity:1;transform:scale(1.05)}
+ 80%{opacity:1;transform:scale(1)}
+ 100%{opacity:0;transform:scale(1.1)}
+}
+
+/* GOOGLE SIGN IN */
+.google-signin{
+ padding:18px 66px;
+ background:white;
+ color:#444;
+ border:none;
+ border-radius:999px;
+ font-size:18px;
+ font-weight:700;
+ cursor:pointer;
+ display:flex;
+ align-items:center;
+ gap:10px;
+ box-shadow:0 4px 16px rgba(0,0,0,.3);
+ transition:all .2s;
+}
+
+.google-signin:hover{
+ box-shadow:0 6px 20px rgba(0,0,0,.4);
+ transform:translateY(-2px);
+}
+
+.google-icon{
+ width:20px;
+ height:20px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="start" id="start">
+ <h1>RULEOUT</h1>
+ <p>Decode the clues. Follow the rules. Guess the word. 5 attempts to crack each puzzle. New challenges daily.</p>
+ <button id="startPlayBtn" style="display:none" onclick="startGame()">▶ PLAY</button>
+ <button class="google-signin" id="authBtn" onclick="handleAuth()">
+  <svg class="google-icon" viewBox="0 0 24 24">
+   <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+   <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+   <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+   <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+  </svg>
+  <span id="authText">Sign in with Google</span>
+ </button>
+</div>
+
+<div class="game" id="game">
+ <div class="container">
+
+  <div class="card">
+   <div class="clue" id="clue"></div>
+   <div class="constraints" id="constraints"></div>
+   <div class="counter" id="counter"></div>
+  </div>
+
+  <div class="card">
+   <input id="guess" placeholder="Type the word that fits"/>
+   <button class="submit" onclick="submitGuess()">Submit</button>
+   <button class="next" id="nextBtn" onclick="nextPuzzle()">Next</button>
+   <div class="message" id="message"></div>
+  </div>
+
+ </div>
+</div>
+
+<script>
+// ============================================
+// FIREBASE CONFIG
+// ============================================
+const firebaseConfig = {
+  apiKey: "AIzaSyDpncc72bVroaBydIlfk4f4Il0ag0dPPP0",
+  authDomain: "ruleout-14bdb.firebaseapp.com",
+  projectId: "ruleout-14bdb",
+  storageBucket: "ruleout-14bdb.firebasestorage.app",
+  messagingSenderId: "497779197134",
+  appId: "1:497779197134:web:3194021bd696fa1b437c9f",
+  measurementId: "G-7BBMSV6GZJ"
+};
+
+// Initialize Firebase (with error handling)
+let auth = null;
+let currentUser = null;
+
+try {
+  firebase.initializeApp(firebaseConfig);
+  auth = firebase.auth();
+  
+  // Listen for auth state changes
+  auth.onAuthStateChanged((user) => {
+    currentUser = user;
+    updateAuthButton();
+  });
+} catch (error) {
+  console.log('Firebase initialization error:', error);
+}
+
+function updateAuthButton() {
+  const authBtn = document.getElementById('authBtn');
+  const playBtn = document.getElementById('startPlayBtn');
+  
+  if (currentUser) {
+    // Signed in - hide sign-in button, show PLAY button
+    authBtn.style.display = 'none';
+    playBtn.style.display = 'flex';
+  } else {
+    // Signed out - show sign-in button, hide PLAY button
+    authBtn.style.display = 'flex';
+    playBtn.style.display = 'none';
+  }
+}
+
+function handleAuth() {
+  if (!auth) {
+    alert('Firebase authentication error. Check console for details.');
+    return;
+  }
+  
+  if (currentUser) {
+    // Sign out
+    auth.signOut().then(() => {
+      console.log('Signed out');
+    });
+  } else {
+    // Sign in
+    const provider = new firebase.auth.GoogleAuthProvider();
+    auth.signInWithPopup(provider)
+      .then((result) => {
+        console.log('Signed in:', result.user.displayName);
+      })
+      .catch((error) => {
+        console.error('Sign-in error:', error);
+        alert('Sign-in failed: ' + error.message);
+      });
+  }
+}
+
+// ============================================
+// GAME CODE
+// ============================================
+const WORDS=[
+ {
+  clues:[
+   "5 letters",
+   "Meanness on purpose",
+   "Rhymes with 'bite'"
+  ],
+  a:"spite"
+ },
+ {
+  clues:[
+   "5 letters",
+   "A sparkle or shine",
+   "What polished metal does"
+  ],
+  a:"gleam"
+ },
+ {
+  clues:[
+   "5 letters",
+   "Like corn on a cob",
+   "Or following someone creepily"
+  ],
+  a:"stalk"
+ },
+ {
+  clues:[
+   "4 letters",
+   "Wet from morning moisture",
+   "Rhymes with 'chewy'"
+  ],
+  a:"dewy"
+ },
+ {
+  clues:[
+   "4 letters",
+   "Water around a castle",
+   "Rhymes with 'boat'"
+  ],
+  a:"moat"
+ }
+];
+
+const CONSTRAINT_POOL = [
+  "No vowels",
+  "No double letters",
+  "Must contain at least one vowel",
+  "No letter: A",
+  "No letter: E",
+  "No letter: I",
+  "No letter: O",
+  "No letter: R",
+  "No letter: S",
+  "No letter: T",
+  "First letter is a vowel",
+  "Last letter is a vowel",
+  "First letter: C",
+  "First letter: P",
+  "First letter: G",
+  "Last letter is R through V",
+  "Contains the letter Y"
+];
+
+const maxGuesses=5;
+let puzzles=[],i=0,guessesLeft=5,constraints=[];
+
+function seed(){
+ const d=new Date();
+ return d.getFullYear()*1000 + d.getMonth()*50 + d.getDate();
+}
+function rng(s){return ()=> (s=(s*9301+49297)%233280)/233280;}
+
+function startGame(){
+ document.getElementById("start").style.display="none";
+ document.getElementById("game").style.display="block";
+ setup();
+ load();
+}
+
+function setup(){
+ const r=rng(seed());
+ puzzles=[...WORDS].sort(()=>r()-.5).slice(0,5);
+}
+
+function genConstraints(ans){
+ const valid = [];
+ 
+ // Always add exact length
+ valid.push(`Exact length: ${ans.length}`);
+ 
+ // Check what's actually true about this word
+ const hasDoubles = /(.)\1/.test(ans);
+ const vowels = ans.match(/[aeiou]/g) || [];
+ const hasVowel = vowels.length > 0;
+ const firstLetter = ans[0];
+ const lastLetter = ans[ans.length - 1];
+ const firstIsVowel = /[aeiou]/.test(firstLetter);
+ const lastIsVowel = /[aeiou]/.test(lastLetter);
+ const lastIsRtoV = /[r-v]/.test(lastLetter);
+ 
+ // Add constraints that are TRUE for this word
+ if(!hasDoubles) valid.push("No double letters");
+ if(hasVowel) valid.push("Must contain at least one vowel");
+ if(firstIsVowel) valid.push("First letter is a vowel");
+ if(lastIsVowel) valid.push("Last letter is a vowel");
+ if(lastIsRtoV) valid.push("Last letter is R through V");
+ 
+ // Add "No letter: X" for letters NOT in the word
+ const notInWord = 'bcdfghjklmnpqrstvwxyz'.split('').filter(l => !ans.includes(l));
+ if(notInWord.length > 0) {
+  const r = rng(seed() + i);
+  const randomLetter = notInWord[Math.floor(r() * notInWord.length)];
+  valid.push(`No letter: ${randomLetter.toUpperCase()}`);
+ }
+ 
+ // Return 3-4 constraints
+ return valid.slice(0, 4);
+}
+
+function violates(w){
+ for(const r of constraints){
+  if(r.startsWith("Exact length") && w.length!=+r.split(": ")[1]) return "Wrong length";
+  if(r==="No vowels" && /[aeiou]/.test(w)) return "Contains vowels";
+  if(r==="No double letters" && /(.)\1/.test(w)) return "Double letters not allowed";
+  if(r==="Must contain at least one vowel" && !/[aeiou]/.test(w)) return "Needs a vowel";
+  if(r.startsWith("No letter:")){
+   const l=r.split(": ")[1].toLowerCase();
+   if(w.includes(l)) return `Contains forbidden letter: ${l.toUpperCase()}`;
+  }
+  if(r==="First letter is a vowel" && !/^[aeiou]/.test(w)) return "Must start with vowel";
+  if(r==="Last letter is a vowel" && !/[aeiou]$/.test(w)) return "Must end with vowel";
+  if(r.startsWith("First letter:") && !w.startsWith(r.slice(-1).toLowerCase())) return "Wrong first letter";
+  if(r==="Last letter is R through V" && !/[r-v]$/.test(w)) return "Last letter must be R-V";
+  if(r==="Contains the letter Y" && !w.includes('y')) return "Must contain Y";
+ }
+ return null;
+}
+
+function update(){
+ counter.textContent=`Guesses left: ${guessesLeft}`;
+}
+
+function submitGuess(){
+ const w=guess.value.toLowerCase().trim();
+ if(!w) return;
+
+ guessesLeft--;
+ update();
+
+ const err=violates(w);
+ guess.value="";
+
+ if(err){
+  message.textContent="❌ "+err;
+  if(guessesLeft===0) fail();
+  return;
+ }
+
+ if(w===puzzles[i].a){
+  win();
+ }else{
+  message.textContent="❌ Wrong";
+  if(guessesLeft===0) fail();
+ }
+}
+
+function win(){
+ const f=document.createElement("div");
+ f.className="flash";
+ f.textContent="CORRECT";
+ document.body.appendChild(f);
+ 
+ // Remove flash and auto-advance after 2.5 seconds
+ setTimeout(()=>{
+  f.remove();
+  nextPuzzle();
+ }, 2500);
+}
+
+function fail(){
+ message.textContent="❌ Answer: "+puzzles[i].a.toUpperCase();
+ document.getElementById("nextBtn").style.display="block";
+}
+
+function nextPuzzle(){
+ i++;
+ if(i>=puzzles.length){
+  clue.textContent="🎉 New puzzles tomorrow.";
+  constraintsEl.innerHTML="";
+  counter.textContent="";
+  return;
+ }
+ load();
+}
+
+function load(){
+ guessesLeft=maxGuesses;
+ clue.textContent=puzzles[i].clues.join(" • ");
+ constraints=genConstraints(puzzles[i].a);
+ constraintsEl.innerHTML=constraints.map(r=>"• "+r).join("<br>");
+ message.textContent="";
+ document.getElementById("nextBtn").style.display="none";
+ update();
+}
+
+const clue=document.getElementById("clue");
+const constraintsEl=document.getElementById("constraints");
+const counter=document.getElementById("counter");
+const message=document.getElementById("message");
+const guess=document.getElementById("guess");
+
+</script>
+
+</body>
+</html>

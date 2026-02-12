@@ -18,17 +18,18 @@
  --accent:#3b82f6;
  --accent-soft:#60a5fa;
  --danger:#fb7185;
+ --success:#34d399;
 }
 
 *{box-sizing:border-box}
 
 body{
  margin:0;
- height:100vh;
+ min-height:100vh;
  font-family:system-ui,-apple-system,Segoe UI,sans-serif;
  background:radial-gradient(1000px 600px at top,#0f2a66,var(--bg));
  color:var(--text);
- overflow:hidden;
+ overflow-x:hidden;
 }
 
 /* START */
@@ -69,15 +70,131 @@ body{
  color:white;
 }
 
+/* GOOGLE SIGN IN */
+.google-signin{
+ padding:18px 66px;
+ background:linear-gradient(135deg,var(--accent),var(--accent-soft));
+ color:white;
+ border:none;
+ border-radius:999px;
+ font-size:18px;
+ font-weight:800;
+ cursor:pointer;
+ display:flex;
+ align-items:center;
+ gap:10px;
+ box-shadow:0 8px 24px rgba(0,0,0,.4);
+ transition:all .2s;
+}
+
+.google-signin:hover{
+ box-shadow:0 12px 32px rgba(0,0,0,.5);
+ transform:translateY(-2px);
+}
+
+.google-icon{
+ width:20px;
+ height:20px;
+ filter:brightness(0) invert(1);
+}
+
+/* SIGN OUT BUTTON */
+.signout-btn{
+ position:fixed;
+ top:20px;
+ right:20px;
+ padding:12px 24px;
+ background:rgba(255,255,255,.1);
+ color:var(--text);
+ border:2px solid rgba(255,255,255,.2);
+ border-radius:12px;
+ font-size:14px;
+ font-weight:700;
+ cursor:pointer;
+ backdrop-filter:blur(10px);
+ transition:all .2s;
+ z-index:1000;
+}
+
+.signout-btn:hover{
+ background:rgba(255,255,255,.2);
+ border-color:rgba(255,255,255,.3);
+}
+
 /* GAME */
-.game{display:none;padding:42px}
+.game{display:none;padding:42px;min-height:100vh}
 
 .container{
  max-width:1100px;
  margin:0 auto;
+}
+
+/* PROGRESS BAR */
+.progress-section{
+ margin-bottom:32px;
+ background:linear-gradient(180deg,var(--card),var(--panel));
+ padding:24px 34px;
+ border-radius:24px;
+ box-shadow:0 16px 32px rgba(0,0,0,.3);
+}
+
+.category-title{
+ font-size:24px;
+ font-weight:900;
+ color:var(--accent-soft);
+ margin-bottom:12px;
+ text-transform:uppercase;
+ letter-spacing:.1em;
+}
+
+.stats-row{
+ display:flex;
+ gap:32px;
+ align-items:center;
+ flex-wrap:wrap;
+}
+
+.stat{
+ display:flex;
+ flex-direction:column;
+ gap:4px;
+}
+
+.stat-label{
+ font-size:12px;
+ color:var(--muted);
+ text-transform:uppercase;
+ letter-spacing:.05em;
+}
+
+.stat-value{
+ font-size:32px;
+ font-weight:900;
+ color:var(--success);
+}
+
+.progress-bar{
+ width:100%;
+ height:12px;
+ background:rgba(0,0,0,.3);
+ border-radius:999px;
+ overflow:hidden;
+ margin-top:16px;
+}
+
+.progress-fill{
+ height:100%;
+ background:linear-gradient(90deg,var(--accent),var(--accent-soft));
+ transition:width .3s ease;
+ border-radius:999px;
+}
+
+/* PUZZLE AREA */
+.puzzle-grid{
  display:grid;
  grid-template-columns:1.3fr .7fr;
  gap:44px;
+ margin-bottom:32px;
 }
 
 .card{
@@ -90,6 +207,7 @@ body{
 .clue{
  font-size:19px;
  margin-bottom:16px;
+ line-height:1.6;
 }
 
 .constraints{
@@ -138,53 +256,72 @@ button{
  font-size:16px;
 }
 
-/* CORRECT FLASH */
-.flash{
+/* SUCCESS CELEBRATION */
+.success-overlay{
  position:fixed;
  inset:0;
  display:flex;
+ flex-direction:column;
  align-items:center;
  justify-content:center;
+ gap:20px;
+ background:rgba(16,185,129,.15);
+ backdrop-filter:blur(8px);
+ z-index:999;
+ animation:fadeIn .3s ease;
+}
+
+.success-text{
  font-size:84px;
  font-weight:900;
  letter-spacing:.25em;
- background:rgba(59,130,246,.28);
- backdrop-filter:blur(6px);
- animation:pop .9s ease forwards;
+ color:var(--success);
+ text-shadow:0 0 30px rgba(16,185,129,.5);
+ animation:pop 2.5s ease forwards;
+}
+
+.points-earned{
+ font-size:48px;
+ font-weight:800;
+ color:var(--accent-soft);
+ animation:slideUp .5s ease .3s both;
+}
+
+.confetti{
+ position:absolute;
+ width:10px;
+ height:10px;
+ background:var(--success);
+ animation:confettiFall 2s ease-out forwards;
+}
+
+@keyframes fadeIn{
+ from{opacity:0}
+ to{opacity:1}
 }
 
 @keyframes pop{
  0%{opacity:0;transform:scale(.6)}
- 20%{opacity:1;transform:scale(1.05)}
- 80%{opacity:1;transform:scale(1)}
- 100%{opacity:0;transform:scale(1.1)}
+ 15%{opacity:1;transform:scale(1.1)}
+ 85%{opacity:1;transform:scale(1)}
+ 100%{opacity:0;transform:scale(1.05)}
 }
 
-/* GOOGLE SIGN IN */
-.google-signin{
- padding:18px 66px;
- background:white;
- color:#444;
- border:none;
- border-radius:999px;
- font-size:18px;
- font-weight:700;
- cursor:pointer;
- display:flex;
- align-items:center;
- gap:10px;
- box-shadow:0 4px 16px rgba(0,0,0,.3);
- transition:all .2s;
+@keyframes slideUp{
+ from{opacity:0;transform:translateY(30px)}
+ to{opacity:1;transform:translateY(0)}
 }
 
-.google-signin:hover{
- box-shadow:0 6px 20px rgba(0,0,0,.4);
- transform:translateY(-2px);
+@keyframes confettiFall{
+ to{
+  transform:translateY(100vh) rotate(360deg);
+  opacity:0;
+ }
 }
 
-.google-icon{
- width:20px;
- height:20px;
+@media(max-width:768px){
+ .puzzle-grid{grid-template-columns:1fr}
+ .stats-row{justify-content:space-between}
 }
 </style>
 </head>
@@ -207,19 +344,45 @@ button{
 </div>
 
 <div class="game" id="game">
+ <button class="signout-btn" id="signoutBtn" style="display:none" onclick="signOut()">Sign Out</button>
+ 
  <div class="container">
-
-  <div class="card">
-   <div class="clue" id="clue"></div>
-   <div class="constraints" id="constraints"></div>
-   <div class="counter" id="counter"></div>
+  
+  <!-- PROGRESS SECTION -->
+  <div class="progress-section">
+   <div class="category-title" id="categoryTitle">FOODS</div>
+   <div class="stats-row">
+    <div class="stat">
+     <div class="stat-label">Total Points</div>
+     <div class="stat-value" id="totalPoints">0</div>
+    </div>
+    <div class="stat">
+     <div class="stat-label">Streak</div>
+     <div class="stat-value" id="streakDisplay">0</div>
+    </div>
+    <div class="stat">
+     <div class="stat-label">Puzzle</div>
+     <div class="stat-value" id="puzzleNum">1/5</div>
+    </div>
+   </div>
+   <div class="progress-bar">
+    <div class="progress-fill" id="progressFill" style="width:0%"></div>
+   </div>
   </div>
 
-  <div class="card">
-   <input id="guess" placeholder="Type the word that fits"/>
-   <button class="submit" onclick="submitGuess()">Submit</button>
-   <button class="next" id="nextBtn" onclick="nextPuzzle()">Next</button>
-   <div class="message" id="message"></div>
+  <!-- PUZZLE -->
+  <div class="puzzle-grid">
+   <div class="card">
+    <div class="clue" id="clue"></div>
+    <div class="constraints" id="constraints"></div>
+    <div class="counter" id="counter"></div>
+   </div>
+
+   <div class="card">
+    <input id="guess" placeholder="Type the word that fits"/>
+    <button class="submit" onclick="submitGuess()">Submit</button>
+    <div class="message" id="message"></div>
+   </div>
   </div>
 
  </div>
@@ -239,15 +402,12 @@ const firebaseConfig = {
   measurementId: "G-7BBMSV6GZJ"
 };
 
-// Initialize Firebase (with error handling)
 let auth = null;
 let currentUser = null;
 
 try {
   firebase.initializeApp(firebaseConfig);
   auth = firebase.auth();
-  
-  // Listen for auth state changes
   auth.onAuthStateChanged((user) => {
     currentUser = user;
     updateAuthButton();
@@ -259,15 +419,25 @@ try {
 function updateAuthButton() {
   const authBtn = document.getElementById('authBtn');
   const playBtn = document.getElementById('startPlayBtn');
+  const signoutBtn = document.getElementById('signoutBtn');
   
   if (currentUser) {
-    // Signed in - hide sign-in button, show PLAY button
     authBtn.style.display = 'none';
     playBtn.style.display = 'flex';
+    if(signoutBtn) signoutBtn.style.display = 'block';
   } else {
-    // Signed out - show sign-in button, hide PLAY button
     authBtn.style.display = 'flex';
     playBtn.style.display = 'none';
+    if(signoutBtn) signoutBtn.style.display = 'none';
+  }
+}
+
+function signOut() {
+  if (auth && currentUser) {
+    auth.signOut().then(() => {
+      document.getElementById("game").style.display = "none";
+      document.getElementById("start").style.display = "flex";
+    });
   }
 }
 
@@ -278,12 +448,8 @@ function handleAuth() {
   }
   
   if (currentUser) {
-    // Sign out
-    auth.signOut().then(() => {
-      console.log('Signed out');
-    });
+    auth.signOut();
   } else {
-    // Sign in
     const provider = new firebase.auth.GoogleAuthProvider();
     auth.signInWithPopup(provider)
       .then((result) => {
@@ -299,97 +465,164 @@ function handleAuth() {
 // ============================================
 // GAME CODE
 // ============================================
-const WORDS=[
- {
-  clues:[
-   "5 letters",
-   "Meanness on purpose",
-   "Rhymes with 'bite'"
-  ],
-  a:"spite"
- },
- {
-  clues:[
-   "5 letters",
-   "A sparkle or shine",
-   "What polished metal does"
-  ],
-  a:"gleam"
- },
- {
-  clues:[
-   "5 letters",
-   "Like corn on a cob",
-   "Or following someone creepily"
-  ],
-  a:"stalk"
- },
- {
-  clues:[
-   "4 letters",
-   "Wet from morning moisture",
-   "Rhymes with 'chewy'"
-  ],
-  a:"dewy"
- },
- {
-  clues:[
-   "4 letters",
-   "Water around a castle",
-   "Rhymes with 'boat'"
-  ],
-  a:"moat"
- }
-];
 
-const CONSTRAINT_POOL = [
-  "No vowels",
-  "No double letters",
-  "Must contain at least one vowel",
-  "No letter: A",
-  "No letter: E",
-  "No letter: I",
-  "No letter: O",
-  "No letter: R",
-  "No letter: S",
-  "No letter: T",
-  "First letter is a vowel",
-  "Last letter is a vowel",
-  "First letter: C",
-  "First letter: P",
-  "First letter: G",
-  "Last letter is R through V",
-  "Contains the letter Y"
-];
+const WORD_CATEGORIES = {
+  "FOODS": [
+    {clues: ["Italian dish", "Long noodles", "Goes with sauce"], a: "pasta"},
+    {clues: ["Breakfast meat", "Comes from pigs", "Crispy strips"], a: "bacon"},
+    {clues: ["Tropical fruit", "Yellow and sweet", "Juicy inside"], a: "mango"},
+    {clues: ["Coffee drink", "Foamy milk", "Espresso based"], a: "latte"},
+    {clues: ["Chocolate treat", "Rich dessert", "Sweet squares"], a: "fudge"},
+    {clues: ["Sandwich bread", "Comes in a loaf", "Can be toasted"], a: "bread"},
+    {clues: ["Breakfast grain", "Hot cereal", "Good with milk"], a: "oats"},
+    {clues: ["Mexican food", "Wrapped tortilla", "Crunchy or soft"], a: "taco"},
+    {clues: ["Dairy product", "Yellow and sliced", "Melts well"], a: "cheese"},
+    {clues: ["Sweet spread", "Bees make it", "Golden liquid"], a: "honey"},
+    {clues: ["Citrus fruit", "Sour and green", "Makes good juice"], a: "lemon"},
+    {clues: ["Red fruit", "Grows on vines", "Wine ingredient"], a: "grape"},
+    {clues: ["Crunchy snack", "Fried potatoes", "Salty treat"], a: "chips"},
+    {clues: ["Asian food", "White grains", "Side dish"], a: "rice"},
+    {clues: ["Sweet dessert", "Birthday treat", "Frosted layers"], a: "cake"}
+  ],
+  "ANIMALS": [
+    {clues: ["Big cat", "Orange with stripes", "Lives in jungle"], a: "tiger"},
+    {clues: ["Sea creature", "Eight tentacles", "Shoots ink"], a: "squid"},
+    {clues: ["Farm animal", "Gallops and neighs", "Can be ridden"], a: "horse"},
+    {clues: ["Asian bear", "Eats bamboo", "Black and white"], a: "panda"},
+    {clues: ["Desert animal", "One or two humps", "Carries loads"], a: "camel"},
+    {clues: ["Slow reptile", "Has a shell", "Leaves slime trail"], a: "snail"},
+    {clues: ["Hopping marsupial", "From Australia", "Sleeps in trees"], a: "koala"},
+    {clues: ["Ocean mammal", "Intelligent swimmer", "Very large"], a: "whale"},
+    {clues: ["Night bird", "Says hoot", "Has big eyes"], a: "owl"},
+    {clues: ["Striped horse", "Black and white", "African animal"], a: "zebra"},
+    {clues: ["Tall bird", "Long neck", "Wading water bird"], a: "crane"},
+    {clues: ["Farm bird", "Lays eggs", "Honks loudly"], a: "goose"},
+    {clues: ["Water bird", "Waddles and quacks", "Pond dweller"], a: "duck"},
+    {clues: ["Rodent pet", "Lives in cage", "Small and squeaky"], a: "mouse"},
+    {clues: ["Hopping animal", "Long ears", "Fluffy tail"], a: "bunny"}
+  ],
+  "PLACES": [
+    {clues: ["Flowing water", "Not a lake", "Fish swim here"], a: "river"},
+    {clues: ["Tall landform", "Climbers love it", "Snow on peak"], a: "mount"},
+    {clues: ["Sandy vacation spot", "Ocean waves", "Seashells here"], a: "beach"},
+    {clues: ["Forest area", "Trees everywhere", "Hiking trails"], a: "woods"},
+    {clues: ["City square", "Open public space", "Urban gathering spot"], a: "plaza"},
+    {clues: ["Grassy field", "Flowers grow here", "Peaceful and open"], a: "meadow"},
+    {clues: ["Hot dry region", "Sand dunes", "Very little water"], a: "desert"},
+    {clues: ["Deep valley", "Water carved it", "Steep rocky walls"], a: "gorge"},
+    {clues: ["Frozen region", "Very cold", "Ice and snow"], a: "polar"},
+    {clues: ["Water body", "Smaller than sea", "Coastal feature"], a: "inlet"},
+    {clues: ["Rocky shore", "Waves crash here", "Ocean meets land"], a: "coast"},
+    {clues: ["Hilltop", "High elevation", "Mountain edge"], a: "ridge"},
+    {clues: ["Small island", "Tropical paradise", "Surrounded by water"], a: "isle"},
+    {clues: ["Flat land", "Good for farming", "Wide open space"], a: "plain"},
+    {clues: ["Valley feature", "Water flows through", "Small ravine"], a: "gully"}
+  ],
+  "THINGS": [
+    {clues: ["Wooden seat", "Has four legs", "Sit on it"], a: "chair"},
+    {clues: ["Writing tool", "Uses ink", "Clicks to open"], a: "pen"},
+    {clues: ["Storage box", "Holds items", "Treasure container"], a: "chest"},
+    {clues: ["Door security", "Needs a key", "Keeps things safe"], a: "locks"},
+    {clues: ["Time keeper", "Tells hours", "Has hands or digital"], a: "clock"},
+    {clues: ["Cutting tool", "Sharp blade", "Kitchen utensil"], a: "knife"},
+    {clues: ["Eating utensil", "Has prongs", "Stabs food"], a: "fork"},
+    {clues: ["Drinking vessel", "Holds liquid", "Clear container"], a: "glass"},
+    {clues: ["Flat surface", "Eat dinner on it", "Has legs"], a: "table"},
+    {clues: ["Light source", "Plugs in wall", "Has a bulb"], a: "lamp"},
+    {clues: ["Head covering", "Keeps you warm", "Has a brim"], a: "cap"},
+    {clues: ["Communication device", "Ring ring", "Makes calls"], a: "phone"},
+    {clues: ["Music player", "Streaming device", "Plays stations"], a: "radio"},
+    {clues: ["Picture frame", "Hangs on wall", "Holds photos"], a: "frame"},
+    {clues: ["Cleaning tool", "Sweeps floor", "Has bristles"], a: "broom"}
+  ],
+  "ACTIONS": [
+    {clues: ["Move quickly", "Faster than jog", "Running race"], a: "sprint"},
+    {clues: ["Leg exercise", "Bend knees down", "Gym movement"], a: "squat"},
+    {clues: ["Water activity", "Stay on surface", "Don't sink"], a: "float"},
+    {clues: ["Victory gesture", "Jump with joy", "Show excitement"], a: "cheer"},
+    {clues: ["Hand motion", "Say hello", "Friendly gesture"], a: "wave"},
+    {clues: ["Catch something", "Use your hands", "Firm grip"], a: "grasp"},
+    {clues: ["Move upward", "Use a ladder", "Go higher"], a: "climb"},
+    {clues: ["Throw forcefully", "Baseball pitcher", "Toss ball"], a: "pitch"},
+    {clues: ["Move forward", "One foot ahead", "Military walk"], a: "march"},
+    {clues: ["Spin around", "Dancer's move", "Rotate body"], a: "twirl"},
+    {clues: ["Jump high", "Go airborne", "Bound forward"], a: "leap"},
+    {clues: ["Pull hard", "Rope competition", "Quick tug"], a: "yank"},
+    {clues: ["Move sneakily", "Walk quietly", "Don't get caught"], a: "sneak"},
+    {clues: ["Push down", "Apply pressure", "Squeeze hard"], a: "press"},
+    {clues: ["Look carefully", "Use your eyes", "Gaze intently"], a: "stare"}
+  ],
+  "NATURE": [
+    {clues: ["White puffy things", "Float in sky", "Made of water vapor"], a: "cloud"},
+    {clues: ["Bright in sky", "Gives light", "Very hot star"], a: "sun"},
+    {clues: ["Night light", "Orbits Earth", "Changes shape"], a: "moon"},
+    {clues: ["Twinkling light", "In night sky", "Many of them"], a: "stars"},
+    {clues: ["Moving air", "Makes trees sway", "Invisible force"], a: "wind"},
+    {clues: ["Water drops", "Falls from clouds", "Makes puddles"], a: "rain"},
+    {clues: ["Frozen water", "Winter weather", "White and cold"], a: "snow"},
+    {clues: ["Colorful arc", "After the rain", "Seven colors"], a: "rainbow"},
+    {clues: ["Loud sound", "Comes with lightning", "Thunder and rain"], a: "storm"},
+    {clues: ["Growing thing", "Has leaves", "Needs sunlight"], a: "plant"},
+    {clues: ["Tall woody plant", "Birds nest here", "Has branches"], a: "tree"},
+    {clues: ["Pretty bloom", "Smells nice", "Red flower"], a: "rose"},
+    {clues: ["Morning wetness", "On grass", "Tiny water drops"], a: "dew"},
+    {clues: ["Hard mineral", "Found in ground", "Very solid"], a: "stone"},
+    {clues: ["Fire remains", "Grey powder", "Left after burning"], a: "ash"}
+  ]
+};
 
-const maxGuesses=5;
-let puzzles=[],i=0,guessesLeft=5,constraints=[];
+const maxGuesses = 5;
+let puzzles = [];
+let i = 0;
+let guessesLeft = 5;
+let constraints = [];
+let currentCategory = "";
+let totalPoints = 0;
+let streak = 0;
 
 function seed(){
- const d=new Date();
- return d.getFullYear()*1000 + d.getMonth()*50 + d.getDate();
+ const d = new Date();
+ return d.getFullYear() * 1000 + d.getMonth() * 50 + d.getDate();
 }
-function rng(s){return ()=> (s=(s*9301+49297)%233280)/233280;}
+
+function rng(s){
+ return () => (s = (s * 9301 + 49297) % 233280) / 233280;
+}
 
 function startGame(){
- document.getElementById("start").style.display="none";
- document.getElementById("game").style.display="block";
+ document.getElementById("start").style.display = "none";
+ document.getElementById("game").style.display = "block";
  setup();
+ 
+ if (!loadProgress()) {
+   i = 0;
+   guessesLeft = maxGuesses;
+   totalPoints = 0;
+   streak = 0;
+ }
+ 
  load();
+ updateStats();
 }
 
 function setup(){
- const r=rng(seed());
- puzzles=[...WORDS].sort(()=>r()-.5).slice(0,5);
+ const r = rng(seed());
+ const categories = Object.keys(WORD_CATEGORIES);
+ currentCategory = categories[Math.floor(r() * categories.length)];
+ 
+ // Pick 5 random words from the category's larger pool
+ const allWords = [...WORD_CATEGORIES[currentCategory]];
+ puzzles = [];
+ for(let j = 0; j < 5 && allWords.length > 0; j++){
+  const idx = Math.floor(r() * allWords.length);
+  puzzles.push(allWords.splice(idx, 1)[0]);
+ }
 }
 
 function genConstraints(ans){
  const valid = [];
- 
- // Always add exact length
  valid.push(`Exact length: ${ans.length}`);
  
- // Check what's actually true about this word
  const hasDoubles = /(.)\1/.test(ans);
  const vowels = ans.match(/[aeiou]/g) || [];
  const hasVowel = vowels.length > 0;
@@ -397,16 +630,12 @@ function genConstraints(ans){
  const lastLetter = ans[ans.length - 1];
  const firstIsVowel = /[aeiou]/.test(firstLetter);
  const lastIsVowel = /[aeiou]/.test(lastLetter);
- const lastIsRtoV = /[r-v]/.test(lastLetter);
  
- // Add constraints that are TRUE for this word
  if(!hasDoubles) valid.push("No double letters");
  if(hasVowel) valid.push("Must contain at least one vowel");
  if(firstIsVowel) valid.push("First letter is a vowel");
  if(lastIsVowel) valid.push("Last letter is a vowel");
- if(lastIsRtoV) valid.push("Last letter is R through V");
  
- // Add "No letter: X" for letters NOT in the word
  const notInWord = 'bcdfghjklmnpqrstvwxyz'.split('').filter(l => !ans.includes(l));
  if(notInWord.length > 0) {
   const r = rng(seed() + i);
@@ -414,102 +643,175 @@ function genConstraints(ans){
   valid.push(`No letter: ${randomLetter.toUpperCase()}`);
  }
  
- // Return 3-4 constraints
  return valid.slice(0, 4);
 }
 
 function violates(w){
  for(const r of constraints){
-  if(r.startsWith("Exact length") && w.length!=+r.split(": ")[1]) return "Wrong length";
-  if(r==="No vowels" && /[aeiou]/.test(w)) return "Contains vowels";
-  if(r==="No double letters" && /(.)\1/.test(w)) return "Double letters not allowed";
-  if(r==="Must contain at least one vowel" && !/[aeiou]/.test(w)) return "Needs a vowel";
+  if(r.startsWith("Exact length") && w.length != +r.split(": ")[1]) return "Wrong length";
+  if(r === "No double letters" && /(.)\1/.test(w)) return "Double letters not allowed";
+  if(r === "Must contain at least one vowel" && !/[aeiou]/.test(w)) return "Needs a vowel";
   if(r.startsWith("No letter:")){
-   const l=r.split(": ")[1].toLowerCase();
+   const l = r.split(": ")[1].toLowerCase();
    if(w.includes(l)) return `Contains forbidden letter: ${l.toUpperCase()}`;
   }
-  if(r==="First letter is a vowel" && !/^[aeiou]/.test(w)) return "Must start with vowel";
-  if(r==="Last letter is a vowel" && !/[aeiou]$/.test(w)) return "Must end with vowel";
-  if(r.startsWith("First letter:") && !w.startsWith(r.slice(-1).toLowerCase())) return "Wrong first letter";
-  if(r==="Last letter is R through V" && !/[r-v]$/.test(w)) return "Last letter must be R-V";
-  if(r==="Contains the letter Y" && !w.includes('y')) return "Must contain Y";
+  if(r === "First letter is a vowel" && !/^[aeiou]/.test(w)) return "Must start with vowel";
+  if(r === "Last letter is a vowel" && !/[aeiou]$/.test(w)) return "Must end with vowel";
  }
  return null;
 }
 
 function update(){
- counter.textContent=`Guesses left: ${guessesLeft}`;
+ counter.textContent = `Guesses left: ${guessesLeft}`;
+}
+
+function updateStats(){
+ document.getElementById('categoryTitle').textContent = currentCategory;
+ document.getElementById('totalPoints').textContent = totalPoints;
+ document.getElementById('streakDisplay').textContent = streak;
+ document.getElementById('puzzleNum').textContent = `${i + 1}/${puzzles.length}`;
+ 
+ const progress = ((i / puzzles.length) * 100);
+ document.getElementById('progressFill').style.width = progress + '%';
 }
 
 function submitGuess(){
- const w=guess.value.toLowerCase().trim();
+ const w = guess.value.toLowerCase().trim();
  if(!w) return;
 
  guessesLeft--;
  update();
+ saveProgress();
 
- const err=violates(w);
- guess.value="";
+ const err = violates(w);
+ guess.value = "";
 
  if(err){
-  message.textContent="❌ "+err;
-  if(guessesLeft===0) fail();
+  message.textContent = "❌ " + err;
+  if(guessesLeft === 0) fail();
   return;
  }
 
- if(w===puzzles[i].a){
+ if(w === puzzles[i].a){
   win();
  }else{
-  message.textContent="❌ Wrong";
-  if(guessesLeft===0) fail();
+  message.textContent = "❌ Wrong word";
+  if(guessesLeft === 0) fail();
  }
 }
 
 function win(){
- const f=document.createElement("div");
- f.className="flash";
- f.textContent="CORRECT";
- document.body.appendChild(f);
+ // Calculate points (start at 100, lose 10 per wrong guess)
+ const pointsEarned = 100 - ((maxGuesses - guessesLeft) * 10);
+ totalPoints += pointsEarned;
+ streak++;
  
- // Remove flash and auto-advance after 2.5 seconds
- setTimeout(()=>{
-  f.remove();
+ // Create success overlay
+ const overlay = document.createElement("div");
+ overlay.className = "success-overlay";
+ 
+ const successText = document.createElement("div");
+ successText.className = "success-text";
+ successText.textContent = "CORRECT!";
+ 
+ const pointsText = document.createElement("div");
+ pointsText.className = "points-earned";
+ pointsText.textContent = `+${pointsEarned} points`;
+ 
+ overlay.appendChild(successText);
+ overlay.appendChild(pointsText);
+ 
+ // Add confetti
+ for(let j = 0; j < 50; j++){
+  const confetti = document.createElement("div");
+  confetti.className = "confetti";
+  confetti.style.left = Math.random() * 100 + '%';
+  confetti.style.background = ['#34d399', '#3b82f6', '#fb7185'][Math.floor(Math.random() * 3)];
+  confetti.style.animationDelay = Math.random() * .3 + 's';
+  confetti.style.animationDuration = (Math.random() * 1 + 1.5) + 's';
+  overlay.appendChild(confetti);
+ }
+ 
+ document.body.appendChild(overlay);
+ 
+ setTimeout(() => {
+  overlay.remove();
   nextPuzzle();
  }, 2500);
 }
 
 function fail(){
- message.textContent="❌ Answer: "+puzzles[i].a.toUpperCase();
- document.getElementById("nextBtn").style.display="block";
+ streak = 0;
+ message.textContent = "❌ Answer: " + puzzles[i].a.toUpperCase();
+ setTimeout(() => {
+  nextPuzzle();
+ }, 2000);
 }
 
 function nextPuzzle(){
  i++;
- if(i>=puzzles.length){
-  clue.textContent="🎉 New puzzles tomorrow.";
-  constraintsEl.innerHTML="";
-  counter.textContent="";
+ if(i >= puzzles.length){
+  clue.textContent = "🎉 Congratulations! You completed all puzzles in " + currentCategory + "!";
+  constraintsEl.innerHTML = "";
+  counter.textContent = `Final Score: ${totalPoints} points`;
+  message.textContent = "New puzzles tomorrow!";
+  saveProgress();
   return;
  }
  load();
+ updateStats();
 }
 
 function load(){
- guessesLeft=maxGuesses;
- clue.textContent=puzzles[i].clues.join(" • ");
- constraints=genConstraints(puzzles[i].a);
- constraintsEl.innerHTML=constraints.map(r=>"• "+r).join("<br>");
- message.textContent="";
- document.getElementById("nextBtn").style.display="none";
+ guessesLeft = maxGuesses;
+ clue.textContent = puzzles[i].clues.join(" • ");
+ constraints = genConstraints(puzzles[i].a);
+ constraintsEl.innerHTML = constraints.map(r => "• " + r).join("<br>");
+ message.textContent = "";
  update();
+ saveProgress();
 }
 
-const clue=document.getElementById("clue");
-const constraintsEl=document.getElementById("constraints");
-const counter=document.getElementById("counter");
-const message=document.getElementById("message");
-const guess=document.getElementById("guess");
+function saveProgress() {
+  const progress = {
+    currentPuzzle: i,
+    guesses: guessesLeft,
+    category: currentCategory,
+    points: totalPoints,
+    streak: streak,
+    puzzles: puzzles,
+    date: new Date().toDateString()
+  };
+  localStorage.setItem('ruleout_progress', JSON.stringify(progress));
+}
 
+function loadProgress() {
+  const saved = localStorage.getItem('ruleout_progress');
+  if (saved) {
+    const progress = JSON.parse(saved);
+    const today = new Date().toDateString();
+    
+    if (progress.date === today && progress.puzzles) {
+      i = progress.currentPuzzle;
+      guessesLeft = progress.guesses;
+      currentCategory = progress.category;
+      totalPoints = progress.points || 0;
+      streak = progress.streak || 0;
+      
+      // Restore the exact puzzle set from that day
+      puzzles = progress.puzzles;
+      
+      return true;
+    }
+  }
+  return false;
+}
+
+const clue = document.getElementById("clue");
+const constraintsEl = document.getElementById("constraints");
+const counter = document.getElementById("counter");
+const message = document.getElementById("message");
+const guess = document.getElementById("guess");
 </script>
 
 </body>

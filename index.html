@@ -7,6 +7,7 @@
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
 <style>
 :root{
@@ -101,15 +102,15 @@ body{
 /* SIGN OUT BUTTON */
 .signout-btn{
  position:fixed;
- top:20px;
- right:20px;
- padding:12px 24px;
- background:rgba(255,255,255,.1);
- color:var(--text);
- border:2px solid rgba(255,255,255,.2);
- border-radius:12px;
- font-size:14px;
- font-weight:700;
+ top:16px;
+ left:16px;
+ padding:6px 10px;
+ background:rgba(255,255,255,.08);
+ color:var(--muted);
+ border:1px solid rgba(255,255,255,.15);
+ border-radius:6px;
+ font-size:11px;
+ font-weight:600;
  cursor:pointer;
  backdrop-filter:blur(10px);
  transition:all .2s;
@@ -117,8 +118,42 @@ body{
 }
 
 .signout-btn:hover{
- background:rgba(255,255,255,.2);
- border-color:rgba(255,255,255,.3);
+ background:rgba(255,255,255,.15);
+ border-color:rgba(255,255,255,.25);
+ color:var(--text);
+}
+
+/* HELP BUTTON */
+.help-btn{
+ position:fixed;
+ bottom:16px;
+ left:16px;
+ width:40px;
+ height:40px;
+ background:rgba(59,130,246,.2);
+ color:var(--accent-soft);
+ border:2px solid var(--accent);
+ border-radius:50%;
+ font-size:20px;
+ font-weight:800;
+ cursor:pointer;
+ backdrop-filter:blur(10px);
+ transition:all .2s;
+ z-index:1000;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+}
+
+.help-btn:hover{
+ background:rgba(59,130,246,.3);
+ transform:scale(1.1);
+}
+
+.help-btn:disabled{
+ opacity:.3;
+ cursor:not-allowed;
+ transform:scale(1);
 }
 
 /* GAME */
@@ -345,12 +380,13 @@ button{
 
 <div class="game" id="game">
  <button class="signout-btn" id="signoutBtn" style="display:none" onclick="signOut()">Sign Out</button>
+ <button class="help-btn" id="helpBtn" onclick="getHint()" title="Get an extra clue">?</button>
  
  <div class="container">
   
   <!-- PROGRESS SECTION -->
   <div class="progress-section">
-   <div class="category-title" id="categoryTitle">FOODS</div>
+   <div class="category-title" id="categoryTitle">STATS</div>
    <div class="stats-row">
     <div class="stat">
      <div class="stat-label">Total Points</div>
@@ -405,14 +441,22 @@ const firebaseConfig = {
 let auth = null;
 let currentUser = null;
 let authReady = false;
+let db = null;
 
 try {
   firebase.initializeApp(firebaseConfig);
   auth = firebase.auth();
+  db = firebase.firestore();
+  
   auth.onAuthStateChanged((user) => {
     currentUser = user;
     authReady = true;
     updateAuthButton();
+    
+    // Load progress when user signs in
+    if (user && document.getElementById("game").style.display === "block") {
+      loadProgress();
+    }
   });
 } catch (error) {
   console.log('Firebase initialization error:', error);
@@ -441,7 +485,7 @@ function updateAuthButton() {
 function signOut() {
   if (auth && currentUser) {
     auth.signOut().then(() => {
-      // Clear any saved progress
+      // Clear localStorage
       localStorage.removeItem('ruleout_progress');
       // Reload the page to reset everything
       window.location.reload();
@@ -476,106 +520,106 @@ function handleAuth() {
 
 const WORD_CATEGORIES = {
   "FOODS": [
-    {clues: ["Italian dish", "Long noodles", "Goes with sauce"], a: "pasta"},
-    {clues: ["Breakfast meat", "Comes from pigs", "Crispy strips"], a: "bacon"},
-    {clues: ["Tropical fruit", "Yellow and sweet", "Juicy inside"], a: "mango"},
-    {clues: ["Coffee drink", "Foamy milk", "Espresso based"], a: "latte"},
-    {clues: ["Chocolate treat", "Rich dessert", "Sweet squares"], a: "fudge"},
-    {clues: ["Sandwich bread", "Comes in a loaf", "Can be toasted"], a: "bread"},
-    {clues: ["Breakfast grain", "Hot cereal", "Good with milk"], a: "oats"},
-    {clues: ["Mexican food", "Wrapped tortilla", "Crunchy or soft"], a: "taco"},
-    {clues: ["Dairy product", "Yellow and sliced", "Melts well"], a: "cheese"},
-    {clues: ["Sweet spread", "Bees make it", "Golden liquid"], a: "honey"},
-    {clues: ["Citrus fruit", "Sour and green", "Makes good juice"], a: "lemon"},
-    {clues: ["Red fruit", "Grows on vines", "Wine ingredient"], a: "grape"},
-    {clues: ["Crunchy snack", "Fried potatoes", "Salty treat"], a: "chips"},
-    {clues: ["Asian food", "White grains", "Side dish"], a: "rice"},
-    {clues: ["Sweet dessert", "Birthday treat", "Frosted layers"], a: "cake"}
+    {clues: ["Bitter vegetable", "Caesar salad base", "Green leafy"], a: "romaine"},
+    {clues: ["Spicy root", "Asian cooking", "Fresh or pickled"], a: "ginger"},
+    {clues: ["Green fruit", "Pit inside", "Toast topping"], a: "avocado"},
+    {clues: ["Italian cheese", "Pizza topping", "Stretchy when melted"], a: "mozzarella"},
+    {clues: ["Breakfast grain", "Scottish dish", "Porridge base"], a: "oatmeal"},
+    {clues: ["Sour liquid", "Salad dressing", "Fermented"], a: "vinegar"},
+    {clues: ["Purple vegetable", "Eggplant", "Mediterranean dish"], a: "aubergine"},
+    {clues: ["Sweet syrup", "Pancake topping", "Tree sap"], a: "maple"},
+    {clues: ["Salty fish", "Pizza topping", "Small and oily"], a: "anchovy"},
+    {clues: ["Italian dish", "Layered pasta", "Baked with cheese"], a: "lasagna"},
+    {clues: ["Soft cheese", "Italian origin", "Fresh and mild"], a: "ricotta"},
+    {clues: ["Green herb", "Fresh garnish", "Looks like parsley"], a: "cilantro"},
+    {clues: ["Spicy condiment", "Hot sauce base", "Fermented peppers"], a: "sriracha"},
+    {clues: ["Sweet fruit", "Dried snack", "Wrinkled skin"], a: "raisin"},
+    {clues: ["Crunchy vegetable", "Green spears", "Spring harvest"], a: "asparagus"}
   ],
   "ANIMALS": [
-    {clues: ["Big cat", "Orange with stripes", "Lives in jungle"], a: "tiger"},
-    {clues: ["Sea creature", "Eight tentacles", "Shoots ink"], a: "squid"},
-    {clues: ["Farm animal", "Gallops and neighs", "Can be ridden"], a: "horse"},
-    {clues: ["Asian bear", "Eats bamboo", "Black and white"], a: "panda"},
-    {clues: ["Desert animal", "One or two humps", "Carries loads"], a: "camel"},
-    {clues: ["Slow reptile", "Has a shell", "Leaves slime trail"], a: "snail"},
-    {clues: ["Hopping marsupial", "From Australia", "Sleeps in trees"], a: "koala"},
-    {clues: ["Ocean mammal", "Intelligent swimmer", "Very large"], a: "whale"},
-    {clues: ["Night bird", "Says hoot", "Has big eyes"], a: "owl"},
-    {clues: ["Striped horse", "Black and white", "African animal"], a: "zebra"},
-    {clues: ["Tall bird", "Long neck", "Wading water bird"], a: "crane"},
-    {clues: ["Farm bird", "Lays eggs", "Honks loudly"], a: "goose"},
-    {clues: ["Water bird", "Waddles and quacks", "Pond dweller"], a: "duck"},
-    {clues: ["Rodent pet", "Lives in cage", "Small and squeaky"], a: "mouse"},
-    {clues: ["Hopping animal", "Long ears", "Fluffy tail"], a: "bunny"}
+    {clues: ["Striped mammal", "Forest dweller", "Masked face"], a: "raccoon"},
+    {clues: ["Australian hopper", "Pouch for babies", "Long tail"], a: "kangaroo"},
+    {clues: ["Slow mover", "Hangs upside down", "Three toed"], a: "sloth"},
+    {clues: ["Arctic bird", "Black and white", "Cannot fly"], a: "penguin"},
+    {clues: ["Long neck", "Spotted pattern", "Tallest animal"], a: "giraffe"},
+    {clues: ["Ocean giant", "Filter feeder", "Largest animal"], a: "whale"},
+    {clues: ["Smart bird", "Can mimic", "Colorful feathers"], a: "parrot"},
+    {clues: ["Spiny creature", "Curls into ball", "Nocturnal"], a: "hedgehog"},
+    {clues: ["Eight arms", "Very intelligent", "Changes color"], a: "octopus"},
+    {clues: ["Horned animal", "Lives in Africa", "Thick skinned"], a: "rhinoceros"},
+    {clues: ["Small primate", "Big eyes", "Nocturnal"], a: "lemur"},
+    {clues: ["Pack hunter", "Howls at moon", "Dog ancestor"], a: "wolf"},
+    {clues: ["Tusked mammal", "Lives in Arctic", "Marine animal"], a: "walrus"},
+    {clues: ["Striped cat", "Fierce hunter", "Orange fur"], a: "tiger"},
+    {clues: ["Flying mammal", "Uses echolocation", "Nocturnal"], a: "bat"}
   ],
-  "PLACES": [
-    {clues: ["Flowing water", "Not a lake", "Fish swim here"], a: "river"},
-    {clues: ["Tall landform", "Climbers love it", "Snow on peak"], a: "mount"},
-    {clues: ["Sandy vacation spot", "Ocean waves", "Seashells here"], a: "beach"},
-    {clues: ["Forest area", "Trees everywhere", "Hiking trails"], a: "woods"},
-    {clues: ["City square", "Open public space", "Urban gathering spot"], a: "plaza"},
-    {clues: ["Grassy field", "Flowers grow here", "Peaceful and open"], a: "meadow"},
-    {clues: ["Hot dry region", "Sand dunes", "Very little water"], a: "desert"},
-    {clues: ["Deep valley", "Water carved it", "Steep rocky walls"], a: "gorge"},
-    {clues: ["Frozen region", "Very cold", "Ice and snow"], a: "polar"},
-    {clues: ["Water body", "Smaller than sea", "Coastal feature"], a: "inlet"},
-    {clues: ["Rocky shore", "Waves crash here", "Ocean meets land"], a: "coast"},
-    {clues: ["Hilltop", "High elevation", "Mountain edge"], a: "ridge"},
-    {clues: ["Small island", "Tropical paradise", "Surrounded by water"], a: "isle"},
-    {clues: ["Flat land", "Good for farming", "Wide open space"], a: "plain"},
-    {clues: ["Valley feature", "Water flows through", "Small ravine"], a: "gully"}
+  "STATS": [
+    {clues: ["Data measure", "Average value", "Center point"], a: "mean"},
+    {clues: ["Middle value", "Statistical term", "50th percentile"], a: "median"},
+    {clues: ["Most frequent", "Common value", "Peak of curve"], a: "mode"},
+    {clues: ["Spread measure", "Data scatter", "Not standard"], a: "range"},
+    {clues: ["Upward pattern", "Growing over time", "Rising line"], a: "trend"},
+    {clues: ["Relationship strength", "Two variables", "Positive or negative"], a: "correlation"},
+    {clues: ["Whole group", "Everyone included", "Complete set"], a: "population"},
+    {clues: ["Small group", "Subset of data", "Representative"], a: "sample"},
+    {clues: ["Standard measure", "Deviation unit", "Normal distribution"], a: "sigma"},
+    {clues: ["Data point", "Away from normal", "Unusual value"], a: "outlier"},
+    {clues: ["Percentage chance", "Likelihood measure", "Between 0 and 1"], a: "probability"},
+    {clues: ["Expected value", "Long run result", "Theoretical average"], a: "expectation"},
+    {clues: ["Data spread", "Squared deviation", "Not standard"], a: "variance"},
+    {clues: ["Bell shaped", "Common distribution", "Gaussian"], a: "normal"},
+    {clues: ["Test result", "Reject null", "Statistical finding"], a: "significant"}
   ],
   "THINGS": [
-    {clues: ["Wooden seat", "Has four legs", "Sit on it"], a: "chair"},
-    {clues: ["Writing tool", "Uses ink", "Clicks to open"], a: "pen"},
-    {clues: ["Storage box", "Holds items", "Treasure container"], a: "chest"},
-    {clues: ["Door security", "Needs a key", "Keeps things safe"], a: "locks"},
-    {clues: ["Time keeper", "Tells hours", "Has hands or digital"], a: "clock"},
-    {clues: ["Cutting tool", "Sharp blade", "Kitchen utensil"], a: "knife"},
-    {clues: ["Eating utensil", "Has prongs", "Stabs food"], a: "fork"},
-    {clues: ["Drinking vessel", "Holds liquid", "Clear container"], a: "glass"},
-    {clues: ["Flat surface", "Eat dinner on it", "Has legs"], a: "table"},
-    {clues: ["Light source", "Plugs in wall", "Has a bulb"], a: "lamp"},
-    {clues: ["Head covering", "Keeps you warm", "Has a brim"], a: "cap"},
-    {clues: ["Communication device", "Ring ring", "Makes calls"], a: "phone"},
-    {clues: ["Music player", "Streaming device", "Plays stations"], a: "radio"},
-    {clues: ["Picture frame", "Hangs on wall", "Holds photos"], a: "frame"},
-    {clues: ["Cleaning tool", "Sweeps floor", "Has bristles"], a: "broom"}
+    {clues: ["Writing surface", "Flip pages", "Spiral bound"], a: "notebook"},
+    {clues: ["Kitchen tool", "Mixing device", "Electric or manual"], a: "blender"},
+    {clues: ["Door fastener", "Needs password", "Digital security"], a: "keypad"},
+    {clues: ["Time device", "Wakes you up", "Morning sound"], a: "alarm"},
+    {clues: ["Comfort item", "Soft support", "Head rest"], a: "pillow"},
+    {clues: ["Outdoor shelter", "Camping gear", "Fabric structure"], a: "tent"},
+    {clues: ["Exercise equipment", "Cardio machine", "Belt moves"], a: "treadmill"},
+    {clues: ["Storage furniture", "Wooden box", "Bedroom item"], a: "dresser"},
+    {clues: ["Cooking vessel", "Has a lid", "Boils water"], a: "kettle"},
+    {clues: ["Cleaning tool", "Sucks dirt", "Electric device"], a: "vacuum"},
+    {clues: ["Garden tool", "Long handle", "Digs holes"], a: "shovel"},
+    {clues: ["Music maker", "Strings attached", "Strumming"], a: "guitar"},
+    {clues: ["Vision aid", "Two lenses", "Frames on nose"], a: "glasses"},
+    {clues: ["Warm cover", "Bed layer", "Soft fabric"], a: "blanket"},
+    {clues: ["Cutting board", "Kitchen surface", "Chop on this"], a: "chopping"}
   ],
   "ACTIONS": [
-    {clues: ["Move quickly", "Faster than jog", "Running race"], a: "sprint"},
-    {clues: ["Leg exercise", "Bend knees down", "Gym movement"], a: "squat"},
-    {clues: ["Water activity", "Stay on surface", "Don't sink"], a: "float"},
-    {clues: ["Victory gesture", "Jump with joy", "Show excitement"], a: "cheer"},
-    {clues: ["Hand motion", "Say hello", "Friendly gesture"], a: "wave"},
-    {clues: ["Catch something", "Use your hands", "Firm grip"], a: "grasp"},
-    {clues: ["Move upward", "Use a ladder", "Go higher"], a: "climb"},
-    {clues: ["Throw forcefully", "Baseball pitcher", "Toss ball"], a: "pitch"},
-    {clues: ["Move forward", "One foot ahead", "Military walk"], a: "march"},
-    {clues: ["Spin around", "Dancer's move", "Rotate body"], a: "twirl"},
-    {clues: ["Jump high", "Go airborne", "Bound forward"], a: "leap"},
-    {clues: ["Pull hard", "Rope competition", "Quick tug"], a: "yank"},
-    {clues: ["Move sneakily", "Walk quietly", "Don't get caught"], a: "sneak"},
-    {clues: ["Push down", "Apply pressure", "Squeeze hard"], a: "press"},
-    {clues: ["Look carefully", "Use your eyes", "Gaze intently"], a: "stare"}
+    {clues: ["Move quietly", "Tiptoe around", "Don't wake them"], a: "sneak"},
+    {clues: ["Quick dash", "Running fast", "Race speed"], a: "sprint"},
+    {clues: ["Spin motion", "Ballet move", "Rotate body"], a: "twirl"},
+    {clues: ["Pull suddenly", "Sharp tug", "Quick jerk"], a: "yank"},
+    {clues: ["Hold tight", "Firm grip", "Don't let go"], a: "grasp"},
+    {clues: ["Look intently", "Fixed gaze", "Don't blink"], a: "stare"},
+    {clues: ["Move upward", "Use ladder", "Scale mountain"], a: "climb"},
+    {clues: ["Jump high", "Spring forward", "Bound motion"], a: "leap"},
+    {clues: ["Wander aimlessly", "Explore casually", "No destination"], a: "roam"},
+    {clues: ["Throw forcefully", "Baseball pitch", "Toss hard"], a: "hurl"},
+    {clues: ["Walk heavily", "Loud steps", "Elephants do this"], a: "stomp"},
+    {clues: ["Bend down", "Lower body", "Duck motion"], a: "crouch"},
+    {clues: ["Victory shout", "Celebrate loudly", "Hooray"], a: "cheer"},
+    {clues: ["Shiver motion", "Cold reaction", "Body shake"], a: "shudder"},
+    {clues: ["Mix together", "Stir ingredients", "Combine well"], a: "blend"}
   ],
   "NATURE": [
-    {clues: ["White puffy things", "Float in sky", "Made of water vapor"], a: "cloud"},
-    {clues: ["Bright in sky", "Gives light", "Very hot star"], a: "sun"},
-    {clues: ["Night light", "Orbits Earth", "Changes shape"], a: "moon"},
-    {clues: ["Twinkling light", "In night sky", "Many of them"], a: "stars"},
-    {clues: ["Moving air", "Makes trees sway", "Invisible force"], a: "wind"},
-    {clues: ["Water drops", "Falls from clouds", "Makes puddles"], a: "rain"},
-    {clues: ["Frozen water", "Winter weather", "White and cold"], a: "snow"},
-    {clues: ["Colorful arc", "After the rain", "Seven colors"], a: "rainbow"},
-    {clues: ["Loud sound", "Comes with lightning", "Thunder and rain"], a: "storm"},
-    {clues: ["Growing thing", "Has leaves", "Needs sunlight"], a: "plant"},
-    {clues: ["Tall woody plant", "Birds nest here", "Has branches"], a: "tree"},
-    {clues: ["Pretty bloom", "Smells nice", "Red flower"], a: "rose"},
-    {clues: ["Morning wetness", "On grass", "Tiny water drops"], a: "dew"},
-    {clues: ["Hard mineral", "Found in ground", "Very solid"], a: "stone"},
-    {clues: ["Fire remains", "Grey powder", "Left after burning"], a: "ash"}
+    {clues: ["Water vapor", "Puffy white", "Floats in sky"], a: "cloud"},
+    {clues: ["Mountain top", "Highest point", "Peak position"], a: "summit"},
+    {clues: ["Deep valley", "Steep sides", "River carved"], a: "canyon"},
+    {clues: ["Hot molten rock", "Volcanic flow", "Glowing orange"], a: "lava"},
+    {clues: ["Ocean movement", "Crashing water", "Beach feature"], a: "wave"},
+    {clues: ["Ice formation", "Hanging spike", "Winter danger"], a: "icicle"},
+    {clues: ["Plant beginning", "Tiny start", "Grows into tree"], a: "seedling"},
+    {clues: ["Storm cloud", "Dark and heavy", "Rain coming"], a: "nimbus"},
+    {clues: ["Rock formation", "Underground cave", "Dripping water"], a: "stalactite"},
+    {clues: ["Natural spring", "Hot water", "Volcanic feature"], a: "geyser"},
+    {clues: ["Wind storm", "Spinning funnel", "Destructive"], a: "tornado"},
+    {clues: ["Ocean floor", "Sandy bottom", "Underwater"], a: "seabed"},
+    {clues: ["Tree liquid", "Sticky substance", "Makes syrup"], a: "sap"},
+    {clues: ["Water body", "Calm surface", "Freshwater"], a: "lake"},
+    {clues: ["Desert plant", "Has spines", "Stores water"], a: "cactus"}
   ]
 };
 
@@ -587,6 +631,7 @@ let constraints = [];
 let currentCategory = "";
 let totalPoints = 0;
 let streak = 0;
+let hintUsed = false;
 
 function seed(){
  const d = new Date();
@@ -597,12 +642,13 @@ function rng(s){
  return () => (s = (s * 9301 + 49297) % 233280) / 233280;
 }
 
-function startGame(){
+async function startGame(){
  document.getElementById("start").style.display = "none";
  document.getElementById("game").style.display = "block";
  setup();
  
- if (!loadProgress()) {
+ const loaded = await loadProgress();
+ if (!loaded) {
    i = 0;
    guessesLeft = maxGuesses;
    totalPoints = 0;
@@ -673,8 +719,27 @@ function update(){
  counter.textContent = `Guesses left: ${guessesLeft}`;
 }
 
+function getHint(){
+ if(hintUsed) return;
+ 
+ hintUsed = true;
+ const answer = puzzles[i].a;
+ const firstLetter = answer[0].toUpperCase();
+ 
+ message.textContent = `💡 Hint: The word starts with "${firstLetter}"`;
+ message.style.color = "var(--accent-soft)";
+ 
+ // Disable the help button
+ document.getElementById('helpBtn').disabled = true;
+ 
+ // Deduct 20 points for using hint
+ totalPoints = Math.max(0, totalPoints - 20);
+ updateStats();
+ saveProgress();
+}
+
 function updateStats(){
- document.getElementById('categoryTitle').textContent = currentCategory;
+ document.getElementById('categoryTitle').textContent = 'STATS';
  document.getElementById('totalPoints').textContent = totalPoints;
  document.getElementById('streakDisplay').textContent = streak;
  document.getElementById('puzzleNum').textContent = `${i + 1}/${puzzles.length}`;
@@ -772,10 +837,17 @@ function nextPuzzle(){
 
 function load(){
  guessesLeft = maxGuesses;
+ hintUsed = false;
  clue.textContent = puzzles[i].clues.join(" • ");
  constraints = genConstraints(puzzles[i].a);
  constraintsEl.innerHTML = constraints.map(r => "• " + r).join("<br>");
  message.textContent = "";
+ message.style.color = "";
+ 
+ // Re-enable help button
+ const helpBtn = document.getElementById('helpBtn');
+ if(helpBtn) helpBtn.disabled = false;
+ 
  update();
  saveProgress();
 }
@@ -788,16 +860,59 @@ function saveProgress() {
     points: totalPoints,
     streak: streak,
     puzzles: puzzles,
+    hintUsed: hintUsed,
     date: new Date().toDateString()
   };
+  
+  // Save to localStorage as backup
   localStorage.setItem('ruleout_progress', JSON.stringify(progress));
+  
+  // Save to Firebase if user is signed in
+  if (currentUser && db) {
+    db.collection('progress').doc(currentUser.uid).set(progress)
+      .catch((error) => {
+        console.error('Error saving to Firebase:', error);
+      });
+  }
 }
 
-function loadProgress() {
+async function loadProgress() {
+  const today = new Date().toDateString();
+  
+  // Try Firebase first if user is signed in
+  if (currentUser && db) {
+    try {
+      const doc = await db.collection('progress').doc(currentUser.uid).get();
+      if (doc.exists) {
+        const progress = doc.data();
+        
+        if (progress.date === today && progress.puzzles) {
+          i = progress.currentPuzzle;
+          guessesLeft = progress.guesses;
+          currentCategory = progress.category;
+          totalPoints = progress.points || 0;
+          streak = progress.streak || 0;
+          puzzles = progress.puzzles;
+          hintUsed = progress.hintUsed || false;
+          
+          // Update help button state
+          if(hintUsed) {
+            const helpBtn = document.getElementById('helpBtn');
+            if(helpBtn) helpBtn.disabled = true;
+          }
+          
+          return true;
+        }
+      }
+    } catch (error) {
+      console.error('Error loading from Firebase:', error);
+    }
+  }
+  
+  // Fall back to localStorage
   const saved = localStorage.getItem('ruleout_progress');
   if (saved) {
     const progress = JSON.parse(saved);
-    const today = new Date().toDateString();
     
     if (progress.date === today && progress.puzzles) {
       i = progress.currentPuzzle;
@@ -805,9 +920,14 @@ function loadProgress() {
       currentCategory = progress.category;
       totalPoints = progress.points || 0;
       streak = progress.streak || 0;
-      
-      // Restore the exact puzzle set from that day
       puzzles = progress.puzzles;
+      hintUsed = progress.hintUsed || false;
+      
+      // Update help button state
+      if(hintUsed) {
+        const helpBtn = document.getElementById('helpBtn');
+        if(helpBtn) helpBtn.disabled = true;
+      }
       
       return true;
     }
@@ -824,3 +944,4 @@ const guess = document.getElementById("guess");
 
 </body>
 </html>
+  

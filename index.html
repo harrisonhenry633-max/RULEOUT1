@@ -1,11 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
+<meta charset="UTF-8">
 <title>RULEOUT</title>
-
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 
 <style>
 :root{
@@ -13,10 +10,7 @@
  --panel:#0b1630;
  --card:#0f1f45;
  --text:#e8f0ff;
- --muted:#8fa6ff;
  --accent:#3b82f6;
- --accent-soft:#60a5fa;
- --danger:#fb7185;
  --success:#34d399;
 }
 
@@ -27,7 +21,7 @@ body{
  color:var(--text);
 }
 
-/* SIGN OUT BUTTON (UPDATED) */
+/* SIGN OUT */
 .signout-btn{
  position:fixed;
  top:12px;
@@ -39,7 +33,6 @@ body{
  color:white;
  border:1px solid rgba(255,255,255,.25);
  cursor:pointer;
- z-index:999;
 }
 
 /* HEADER */
@@ -53,7 +46,7 @@ body{
 .category-title{
  font-size:24px;
  font-weight:900;
- color:var(--accent-soft);
+ color:#60a5fa;
  margin-bottom:12px;
  letter-spacing:.15em;
 }
@@ -115,7 +108,7 @@ button.submit{
 
 <body>
 
-<button class="signout-btn" onclick="signOut()">Sign Out</button>
+<button class="signout-btn">Sign Out</button>
 
 <div class="progress-section">
 <div class="category-title">STATS</div>
@@ -153,56 +146,69 @@ button.submit{
 </div>
 
 <script>
-// =================================
-// HARDER WORD LIST (Wordle Level)
-// =================================
-const WORD_CATEGORIES = {
-WORDS:[
-{clues:["Reduce severity","Make less intense","Calm down"],a:"abate"},
-{clues:["Hard to see through","Not transparent","Hidden meaning"],a:"opaque"},
-{clues:["Short-lived","Doesn't last","Brief existence"],a:"ephemeral"},
-{clues:["Talkative person","Speaks excessively","Wordy"],a:"garrulous"},
-{clues:["Fake appearance","False front","Misleading look"],a:"facade"},
-{clues:["Careful with money","Avoids waste","Economical"],a:"frugal"},
-{clues:["Lazy","Avoids effort","Not active"],a:"indolent"},
-{clues:["Secret cooperation","Hidden plotting","Conspire together"],a:"collude"},
-{clues:["Extreme anger","Burning rage","Deep fury"],a:"ireful"},
-{clues:["Harsh attack speech","Bitter rant","Verbal assault"],a:"diatribe"}
-]
-};
 
+/* ---------- ELEMENTS ---------- */
+const clue=document.getElementById("clue");
+const constraintsEl=document.getElementById("constraints");
+const counter=document.getElementById("counter");
+const guess=document.getElementById("guess");
+const message=document.getElementById("message");
+const totalPointsEl=document.getElementById("totalPoints");
+const streakDisplay=document.getElementById("streakDisplay");
+const puzzleNum=document.getElementById("puzzleNum");
+
+/* ---------- WORD LIST (HARD) ---------- */
+const WORDS=[
+{clues:["Reduce intensity","Make milder","Calm something"],a:"abate"},
+{clues:["Hard to understand","Not transparent","Hidden meaning"],a:"opaque"},
+{clues:["Short-lived","Doesn't last","Brief existence"],a:"ephemeral"},
+{clues:["Overly talkative","Speaks endlessly","Very wordy"],a:"garrulous"},
+{clues:["False appearance","Fake front","Illusion look"],a:"facade"},
+{clues:["Careful with money","Avoids waste","Economical"],a:"frugal"},
+{clues:["Lazy","Avoids effort","Inactive"],a:"indolent"},
+{clues:["Secret plotting","Hidden cooperation","Conspire"],a:"collude"},
+{clues:["Extreme anger","Burning rage","Deep fury"],a:"ireful"},
+{clues:["Harsh rant","Bitter speech","Verbal attack"],a:"diatribe"}
+];
+
+/* ---------- GAME STATE ---------- */
 let puzzles=[];
 let i=0;
 let guessesLeft=5;
 let totalPoints=0;
 let streak=0;
-let constraints=[];
 
+/* ---------- SETUP ---------- */
 function setup(){
- const arr=[...WORD_CATEGORIES.WORDS];
+ const pool=[...WORDS];
  for(let j=0;j<5;j++){
-  puzzles.push(arr.splice(Math.floor(Math.random()*arr.length),1)[0]);
+  puzzles.push(pool.splice(Math.floor(Math.random()*pool.length),1)[0]);
  }
 }
 
-function genConstraints(ans){
+/* ---------- CONSTRAINTS ---------- */
+function genConstraints(word){
  return[
- `Length: ${ans.length}`,
- `Starts with ${ans[0].toUpperCase()}`,
- `Ends with ${ans.slice(-1).toUpperCase()}`,
+ `Length: ${word.length}`,
+ `Starts with ${word[0].toUpperCase()}`,
+ `Ends with ${word.slice(-1).toUpperCase()}`,
  `Contains vowel`
  ];
 }
 
+/* ---------- LOAD PUZZLE ---------- */
 function load(){
  guessesLeft=5;
- clue.textContent=puzzles[i].clues.join(" • ");
- constraints=genConstraints(puzzles[i].a);
- constraintsEl.innerHTML=constraints.map(x=>"• "+x).join("<br>");
+ const p=puzzles[i];
+
+ clue.textContent=p.clues.join(" • ");
+ constraintsEl.innerHTML=genConstraints(p.a).map(x=>"• "+x).join("<br>");
  counter.textContent="Guesses left: "+guessesLeft;
  puzzleNum.textContent=(i+1)+"/5";
+ message.textContent="";
 }
 
+/* ---------- SUBMIT ---------- */
 function submitGuess(){
  const w=guess.value.toLowerCase().trim();
  if(!w)return;
@@ -214,43 +220,35 @@ function submitGuess(){
   totalPoints+=100;
   streak++;
   next();
- }else{
+ } else {
   message.textContent="Wrong";
-  if(guessesLeft==0){
+  if(guessesLeft===0){
    streak=0;
    next();
   }
  }
- guess.value="";
+
  totalPointsEl.textContent=totalPoints;
  streakDisplay.textContent=streak;
+ guess.value="";
 }
 
+/* ---------- NEXT ---------- */
 function next(){
  i++;
  if(i>=puzzles.length){
-  clue.textContent="Finished!";
+  clue.textContent="All puzzles complete!";
+  constraintsEl.innerHTML="";
+  counter.textContent="";
   return;
  }
  load();
 }
 
+/* ---------- START ---------- */
 setup();
 load();
 
-const clue=document.getElementById("clue");
-const constraintsEl=document.getElementById("constraints");
-const counter=document.getElementById("counter");
-const guess=document.getElementById("guess");
-const message=document.getElementById("message");
-const totalPointsEl=document.getElementById("totalPoints");
-const streakDisplay=document.getElementById("streakDisplay");
-const puzzleNum=document.getElementById("puzzleNum");
-
-// dummy signout
-function signOut(){
- alert("Signed out");
-}
 </script>
 </body>
 </html>

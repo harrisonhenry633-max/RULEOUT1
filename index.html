@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>RULEOUT</title>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+<style>
+:root{
+ --bg:#050b1a;
+ --panel:#0b1630;
+ --card:#0f1f45;
+ --text:#e8f0ff;
+ --muted:#8fa6ff;
+ --accent:#3b82f6;
+ --accent-soft:#60a5fa;
+ --danger:#fb7185;
+ --success:#34d399;
+}
+
+*{box-sizing:border-box}
+
+body{
+ margin:0;
+ min-height:100vh;
+ font-family:system-ui,-apple-system,Segoe UI,sans-serif;
+ background:radial-gradient(1000px 600px at top,#0f2a66,var(--bg));
+ color:var(--text);
+ overflow-x:hidden;
+}
+
+/* START */
+.start{
+ position:fixed;
+ inset:0;
+ display:flex;
+ flex-direction:column;
+ align-items:center;
+ justify-content:center;
+ gap:26px;
+ background:radial-gradient(900px 500px at center,#123a8c,#050b1a);
+}
+
+.start h1{
+ font-size:68px;
+ letter-spacing:.35em;
+}
+
+.start p{
+ max-width:560px;
+ text-align:center;
+ color:var(--muted);
+ font-size:18px;
+}
+
+.start button{
+ padding:18px 66px;
+ font-size:22px;
+ border:none;
+ border-radius:999px;
+ cursor:pointer;
+ font-weight:800;
+}
+
+.start #startPlayBtn{
+ background:linear-gradient(135deg,var(--accent),var(--accent-soft));
+ color:white;
+}
+
+/* GOOGLE SIGN IN */
+.google-signin{
+ padding:18px 66px;
+ background:linear-gradient(135deg,var(--accent),var(--accent-soft));
+ color:white;
+ border:none;
+ border-radius:999px;
+ font-size:18px;
+ font-weight:800;
+ cursor:pointer;
+ display:flex;
+ align-items:center;
+ gap:10px;
+ box-shadow:0 8px 24px rgba(0,0,0,.4);
+ transition:all .2s;
+}
+
+.google-signin:hover{
+ box-shadow:0 12px 32px rgba(0,0,0,.5);
+ transform:translateY(-2px);
+}
+
+.google-icon{
+ width:20px;
+ height:20px;
+ filter:brightness(0) invert(1);
+}
+
+/* SIGN OUT BUTTON */
+.signout-btn{
+ position:fixed;
+ top:16px;
+ left:16px;
+ padding:6px 10px;
+ background:rgba(255,255,255,.08);
+ color:var(--muted);
+ border:1px solid rgba(255,255,255,.15);
+ border-radius:6px;
+ font-size:11px;
+ font-weight:600;
+ cursor:pointer;
+ backdrop-filter:blur(10px);
+ transition:all .2s;
+ z-index:1000;
+}
+
+.signout-btn:hover{
+ background:rgba(255,255,255,.15);
+ border-color:rgba(255,255,255,.25);
+ color:var(--text);
+}
+
+/* HELP BUTTON */
+.help-btn{
+ position:fixed;
+ bottom:16px;
+ left:16px;
+ width:40px;
+ height:40px;
+ background:rgba(59,130,246,.2);
+ color:var(--accent-soft);
+ border:2px solid var(--accent);
+ border-radius:50%;
+ font-size:20px;
+ font-weight:800;
+ cursor:pointer;
+ backdrop-filter:blur(10px);
+ transition:all .2s;
+ z-index:1000;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+}
+
+.help-btn:hover{
+ background:rgba(59,130,246,.3);
+ transform:scale(1.1);
+}
+
+.help-btn:disabled{
+ opacity:.3;
+ cursor:not-allowed;
+ transform:scale(1);
+}
+
+/* GAME */
+.game{display:none;padding:42px;min-height:100vh}
+
+.container{
+ max-width:1100px;
+ margin:0 auto;
+}
+
+/* PROGRESS BAR */
+.progress-section{
+ margin-bottom:32px;
+ background:linear-gradient(180deg,var(--card),var(--panel));
+ padding:24px 34px;
+ border-radius:24px;
+ box-shadow:0 16px 32px rgba(0,0,0,.3);
+}
+
+.category-title{
+ font-size:24px;
+ font-weight:900;
+ color:var(--accent-soft);
+ margin-bottom:12px;
+ text-transform:uppercase;
+ letter-spacing:.1em;
+}
+
+.stats-row{
+ display:flex;
+ gap:32px;
+ align-items:center;
+ flex-wrap:wrap;
+}
+
+.stat{
+ display:flex;
+ flex-direction:column;
+ gap:4px;
+}
+
+.stat-label{
+ font-size:12px;
+ color:var(--muted);
+ text-transform:uppercase;
+ letter-spacing:.05em;
+}
+
+.stat-value{
+ font-size:32px;
+ font-weight:900;
+ color:var(--success);
+}
+
+.progress-bar{
+ width:100%;
+ height:12px;
+ background:rgba(0,0,0,.3);
+ border-radius:999px;
+ overflow:hidden;
+ margin-top:16px;
+}
+
+.progress-fill{
+ height:100%;
+ background:linear-gradient(90deg,var(--accent),var(--accent-soft));
+ transition:width .3s ease;
+ border-radius:999px;
+}
+
+/* PUZZLE AREA */
+.puzzle-grid{
+ display:grid;
+ grid-template-columns:1.3fr .7fr;
+ gap:44px;
+ margin-bottom:32px;
+}
+
+.card{
+ background:linear-gradient(180deg,var(--card),var(--panel));
+ padding:34px;
+ border-radius:24px;
+ box-shadow:0 32px 64px rgba(0,0,0,.45);
+}
+
+.clue{
+ font-size:19px;
+ margin-bottom:16px;
+ line-height:1.6;
+}
+
+.constraints{
+ color:var(--danger);
+ line-height:1.8;
+ font-size:15px;
+ margin-bottom:26px;
+}
+
+.counter{
+ font-size:34px;
+ font-weight:900;
+ color:var(--accent-soft);
+}
+
+/* INPUT */
+input{
+ width:100%;
+ padding:18px;
+ font-size:20px;
+ border-radius:16px;
+ border:none;
+ outline:none;
+ background:#020617;
+ color:var(--text);
+ text-align:center;
+}
+
+button{
+ width:100%;
+ padding:18px;
+ margin-top:16px;
+ border-radius:16px;
+ border:none;
+ font-weight:900;
+ cursor:pointer;
+}
+
+.submit{background:var(--accent);color:white}
+.next{background:#1e293b;color:var(--muted);display:none}
+
+.message{
+ margin-top:20px;
+ min-height:32px;
+ text-align:center;
+ font-size:16px;
+}
+
+/* SUCCESS CELEBRATION */
+.success-overlay{
+ position:fixed;
+ inset:0;
+ display:flex;
+ flex-direction:column;
+ align-items:center;
+ justify-content:center;
+ gap:20px;
+ background:rgba(16,185,129,.15);
+ backdrop-filter:blur(8px);
+ z-index:999;
+ animation:fadeIn .3s ease;
+}
+
+.success-text{
+ font-size:84px;
+ font-weight:900;
+ letter-spacing:.25em;
+ color:var(--success);
+ text-shadow:0 0 30px rgba(16,185,129,.5);
+ animation:pop 2.5s ease forwards;
+}
+
+.points-earned{
+ font-size:48px;
+ font-weight:800;
+ color:var(--accent-soft);
+ animation:slideUp .5s ease .3s both;
+}
+
+.confetti{
+ position:absolute;
+ width:10px;
+ height:10px;
+ background:var(--success);
+ animation:confettiFall 2s ease-out forwards;
+}
+
+@keyframes fadeIn{
+ from{opacity:0}
+ to{opacity:1}
+}
+
+@keyframes pop{
+ 0%{opacity:0;transform:scale(.6)}
+ 15%{opacity:1;transform:scale(1.1)}
+ 85%{opacity:1;transform:scale(1)}
+ 100%{opacity:0;transform:scale(1.05)}
+}
+
+@keyframes slideUp{
+ from{opacity:0;transform:translateY(30px)}
+ to{opacity:1;transform:translateY(0)}
+}
+
+@keyframes confettiFall{
+ to{
+  transform:translateY(100vh) rotate(360deg);
+  opacity:0;
+ }
+}
+
+@media(max-width:768px){
+ .puzzle-grid{grid-template-columns:1fr}
+ .stats-row{justify-content:space-between}
+}
+</style>
+</head>
+
+<body>
+
+<div class="start" id="start">
+ <h1>RULEOUT</h1>
+ <p>Decode the clues. Follow the rules. Guess the word. 5 attempts to crack each puzzle. New challenges daily.</p>
+ <button id="startPlayBtn" style="display:none" onclick="startGame()">▶ PLAY SOLO</button>
+ <button id="hostBtn" style="display:none;margin-top:12px;background:linear-gradient(135deg,#f59e0b,#f97316)" onclick="window.open('https://harrisonhenry633-max.github.io/HOSTPAGE/', '_blank')">🎮 HOST TOURNAMENT</button>
+ <button id="joinBtn" style="display:none;margin-top:12px;background:linear-gradient(135deg,#8b5cf6,#7c3aed)" onclick="window.open('https://harrisonhenry633-max.github.io/JOINPAGE/', '_blank')">🎯 JOIN TOURNAMENT</button>
+ <button class="google-signin" id="authBtn" onclick="handleAuth()">
+  <svg class="google-icon" viewBox="0 0 24 24">
+   <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+   <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+   <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+   <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+  </svg>
+  <span id="authText">Sign in with Google</span>
+ </button>
+</div>
+
+<div class="game" id="game">
+ <button class="signout-btn" id="signoutBtn" style="display:none" onclick="signOut()">Sign Out</button>
+ <button class="help-btn" id="helpBtn" onclick="getHint()" title="Get an extra clue">?</button>
+ 
+ <div class="container">
+  
+  <!-- PROGRESS SECTION -->
+  <div class="progress-section">
+   <div class="category-title" id="categoryTitle">STATS</div>
+   <div class="stats-row">
+    <div class="stat">
+     <div class="stat-label">Total Points</div>
+     <div class="stat-value" id="totalPoints">0</div>
+    </div>
+    <div class="stat">
+     <div class="stat-label">Streak</div>
+     <div class="stat-value" id="streakDisplay">0</div>
+    </div>
+    <div class="stat">
+     <div class="stat-label">Puzzle</div>
+     <div class="stat-value" id="puzzleNum">1/5</div>
+    </div>
+   </div>
+   <div class="progress-bar">
+    <div class="progress-fill" id="progressFill" style="width:0%"></div>
+   </div>
+  </div>
+
+  <!-- PUZZLE -->
+  <div class="puzzle-grid">
+   <div class="card">
+    <div style="font-size:14px;color:var(--accent-soft);font-weight:700;margin-bottom:12px;text-transform:uppercase" id="currentCategoryDisplay">SPORTS</div>
+    <div class="clue" id="clue"></div>
+    <div class="constraints" id="constraints"></div>
+    <div class="counter" id="counter"></div>
+   </div>
+
+   <div class="card">
+    <input id="guess" placeholder="Type the word that fits"/>
+    <button class="submit" onclick="submitGuess()">Submit</button>
+    <div class="message" id="message"></div>
+   </div>
+  </div>
+
+ </div>
+</div>
+
+<div class="start" id="victory" style="display:none">
+ <h1 style="font-size:72px;color:var(--success);text-shadow:0 0 40px rgba(52,211,153,.6)">🎉</h1>
+ <h2 style="font-size:48px;margin:0">YOU BEAT RULEOUT!</h2>
+ <p style="font-size:24px;color:var(--accent-soft);margin:20px 0">Final Score: <span id="finalScore" style="font-weight:900">0</span> points</p>
+ <button style="background:linear-gradient(135deg,var(--success),#10b981);color:white" onclick="playAgain()">▶ PLAY AGAIN</button>
+</div>
+
+<script>
+// ============================================
+// FIREBASE CONFIG
+// ============================================
+const firebaseConfig = {
+  apiKey: "AIzaSyDpncc72bVroaBydIlfk4f4Il0ag0dPPP0",
+  authDomain: "ruleout-14bdb.firebaseapp.com",
+  projectId: "ruleout-14bdb",
+  storageBucket: "ruleout-14bdb.firebasestorage.app",
+  messagingSenderId: "497779197134",
+  appId: "1:497779197134:web:3194021bd696fa1b437c9f",
+  measurementId: "G-7BBMSV6GZJ"
+};
+
+let auth = null;
+let currentUser = null;
+let authReady = false;
+let db = null;
+
+try {
+  firebase.initializeApp(firebaseConfig);
+  auth = firebase.auth();
+  db = firebase.firestore();
+  
+  auth.onAuthStateChanged((user) => {
+    currentUser = user;
+    authReady = true;
+    updateAuthButton();
+    
+    // Load progress when user signs in
+    if (user && document.getElementById("game").style.display === "block") {
+      loadProgress();
+    }
+  });
+} catch (error) {
+  console.log('Firebase initialization error:', error);
+  authReady = true;
+  updateAuthButton();
+}
+
+function updateAuthButton() {
+  if (!authReady) return;
+  
+  const authBtn = document.getElementById('authBtn');
+  const playBtn = document.getElementById('startPlayBtn');
+  const hostBtn = document.getElementById('hostBtn');
+  const joinBtn = document.getElementById('joinBtn');
+  const signoutBtn = document.getElementById('signoutBtn');
+  
+  if (currentUser) {
+    authBtn.style.display = 'none';
+    playBtn.style.display = 'flex';
+    hostBtn.style.display = 'flex';
+    joinBtn.style.display = 'flex';
+    if(signoutBtn) signoutBtn.style.display = 'block';
+  } else {
+    authBtn.style.display = 'flex';
+    playBtn.style.display = 'none';
+    hostBtn.style.display = 'none';
+    joinBtn.style.display = 'none';
+    if(signoutBtn) signoutBtn.style.display = 'none';
+  }
+}
+
+function signOut() {
+  if (auth && currentUser) {
+    auth.signOut().then(() => {
+      // Clear localStorage
+      localStorage.removeItem('ruleout_progress');
+      // Reload the page to reset everything
+      window.location.reload();
+    });
+  }
+}
+
+function handleAuth() {
+  if (!auth) {
+    alert('Firebase authentication error. Check console for details.');
+    return;
+  }
+  
+  if (currentUser) {
+    auth.signOut();
+  } else {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    auth.signInWithPopup(provider)
+      .then((result) => {
+        console.log('Signed in:', result.user.displayName);
+      })
+      .catch((error) => {
+        console.error('Sign-in error:', error);
+        alert('Sign-in failed: ' + error.message);
+      });
+  }
+}
+
+// ============================================
+// GAME CODE
+// ============================================
+
+const WORD_CATEGORIES = [
+  {
+    name: "SPORTS",
+    words: [
+      {clues: ["Racket sport", "Shuttlecock flies", "Fast-paced rally"], a: "badminton"},
+      {clues: ["Winter sliding", "Flat on stomach", "Icy track"], a: "luge"},
+      {clues: ["Bow weapon", "Target practice", "Robin Hood skill"], a: "archery"},
+      {clues: ["Ring combat", "Submission holds", "Greco-Roman style"], a: "wrestling"},
+      {clues: ["Water blade", "Stand up motion", "Lake gliding"], a: "kayak"},
+      {clues: ["Vault apparatus", "Balance beam", "Floor routine"], a: "gymnastics"},
+      {clues: ["Stick and puck", "Face-off circle", "Penalty box"], a: "hockey"},
+      {clues: ["Pedal machine", "Two wheels", "Tour de France"], a: "cycling"},
+      {clues: ["Oval ball", "Try line", "Scrum formation"], a: "rugby"},
+      {clues: ["Iron clubs", "Tee box", "Putting green"], a: "golf"}
+    ]
+  },
+  {
+    name: "FOOD",
+    words: [
+      {clues: ["Fermented cabbage", "Korean staple", "Spicy side dish"], a: "kimchi"},
+      {clues: ["Green paste", "Sushi companion", "Japanese horseradish"], a: "wasabi"},
+      {clues: ["Chickpea spread", "Middle Eastern dip", "Tahini blend"], a: "hummus"},
+      {clues: ["Grain alternative", "Andean superfood", "Protein-rich seed"], a: "quinoa"},
+      {clues: ["Smoked salmon", "Cured fish", "Bagel topping"], a: "lox"},
+      {clues: ["Seaweed wrapper", "Sushi roll", "Dried ocean plant"], a: "nori"},
+      {clues: ["Fermented soybean", "Paste or soup", "Japanese seasoning"], a: "miso"},
+      {clues: ["Indian flatbread", "Tandoor baked", "Garlic variety"], a: "naan"},
+      {clues: ["Smoked meat", "Cured beef", "Deli classic"], a: "pastrami"},
+      {clues: ["Spanish rice dish", "Saffron flavored", "Seafood mix"], a: "paella"}
+    ]
+  },
+  {
+    name: "HISTORY",
+    words: [
+      {clues: ["Egyptian writing", "Picture symbols", "Ancient script"], a: "hieroglyphs"},
+      {clues: ["Roman arena", "Gladiator venue", "Ancient stadium"], a: "colosseum"},
+      {clues: ["Greek formation", "Shield wall", "Military tactic"], a: "phalanx"},
+      {clues: ["Mesopotamian city", "Hanging gardens", "Ancient wonder"], a: "babylon"},
+      {clues: ["Viking explorer", "Greenland settler", "Norse navigator"], a: "erikson"},
+      {clues: ["Aztec capital", "Lake city", "Modern Mexico"], a: "tenochtitlan"},
+      {clues: ["Medieval plague", "Bubonic disease", "14th century"], a: "pestilence"},
+      {clues: ["Ancient library", "Egyptian city", "Knowledge center"], a: "alexandria"},
+      {clues: ["Mongol leader", "Empire builder", "Asian conqueror"], a: "genghis"},
+      {clues: ["Stone monument", "Prehistoric circle", "English plains"], a: "stonehenge"}
+    ]
+  },
+  {
+    name: "POLITICS",
+    words: [
+      {clues: ["Bill rejection", "Presidential power", "Override possible"], a: "veto"},
+      {clues: ["Supreme authority", "National power", "Independence"], a: "sovereignty"},
+      {clues: ["Extended speech", "Delay tactic", "Senate procedure"], a: "filibuster"},
+      {clues: ["Government overthrow", "Sudden takeover", "Military seizure"], a: "coup"},
+      {clues: ["Voting district", "Boundary drawing", "Electoral area"], a: "precinct"},
+      {clues: ["Alliance treaty", "Defense pact", "Military coalition"], a: "nato"},
+      {clues: ["Party meeting", "Delegate selection", "Primary event"], a: "caucus"},
+      {clues: ["Official count", "Population data", "Every ten years"], a: "census"},
+      {clues: ["Trade restriction", "Economic penalty", "Political pressure"], a: "embargo"},
+      {clues: ["Formal accusation", "President's trial", "Congressional power"], a: "impeachment"}
+    ]
+  },
+  {
+    name: "MATH",
+    words: [
+      {clues: ["Number line", "Horizontal reference", "Graph component"], a: "axis"},
+      {clues: ["Angle measure", "Less than ninety", "Sharp corner"], a: "acute"},
+      {clues: ["Corner point", "Graph peak", "Polygon meeting"], a: "vertex"},
+      {clues: ["Mirror line", "Equal halves", "Balanced division"], a: "symmetry"},
+      {clues: ["Repeated factor", "Power notation", "Raised number"], a: "exponent"},
+      {clues: ["Curved line", "Circle piece", "Rainbow shape"], a: "arc"},
+      {clues: ["Equal sides", "Equilateral type", "Regular polygon"], a: "isosceles"},
+      {clues: ["Measure around", "Border distance", "Fence length"], a: "perimeter"},
+      {clues: ["Rate comparison", "Part to whole", "Fraction form"], a: "ratio"},
+      {clues: ["Angle sum", "Triangle rule", "180 degrees"], a: "theorem"}
+    ]
+  }
+];
+
+const maxGuesses = 5;
+let puzzles = [];
+let categoryIndex = 0;
+let puzzleIndex = 0;
+let guessesLeft = 5;
+let constraints = [];
+let currentCategory = "";
+let totalPoints = 0;
+let streak = 0;
+let hintUsed = false;
+
+function seed(){
+ const d = new Date();
+ return d.getFullYear() * 1000 + d.getMonth() * 50 + d.getDate();
+}
+
+function rng(s){
+ return () => (s = (s * 9301 + 49297) % 233280) / 233280;
+}
+
+async function startGame(){
+ document.getElementById("start").style.display = "none";
+ document.getElementById("game").style.display = "block";
+ 
+ const loaded = await loadProgress();
+ if (!loaded) {
+   categoryIndex = 0;
+   puzzleIndex = 0;
+   guessesLeft = maxGuesses;
+   totalPoints = 0;
+   streak = 0;
+ }
+ 
+ setup();
+ load();
+ updateStats();
+}
+
+function setup(){
+ if (categoryIndex >= WORD_CATEGORIES.length) {
+   showVictoryScreen();
+   return;
+ }
+ 
+ currentCategory = WORD_CATEGORIES[categoryIndex].name;
+ puzzles = WORD_CATEGORIES[categoryIndex].words;
+}
+
+function genConstraints(ans){
+ const valid = [];
+ valid.push(`Exact length: ${ans.length}`);
+ 
+ const hasDoubles = /(.)\1/.test(ans);
+ const vowels = ans.match(/[aeiou]/g) || [];
+ const hasVowel = vowels.length > 0;
+ const firstLetter = ans[0];
+ const lastLetter = ans[ans.length - 1];
+ const firstIsVowel = /[aeiou]/.test(firstLetter);
+ const lastIsVowel = /[aeiou]/.test(lastLetter);
+ 
+ if(!hasDoubles) valid.push("No double letters");
+ if(hasVowel) valid.push("Must contain at least one vowel");
+ if(firstIsVowel) valid.push("First letter is a vowel");
+ if(lastIsVowel) valid.push("Last letter is a vowel");
+ 
+ const notInWord = 'bcdfghjklmnpqrstvwxyz'.split('').filter(l => !ans.includes(l));
+ if(notInWord.length > 0) {
+  const r = rng(seed() + puzzleIndex);
+  const randomLetter = notInWord[Math.floor(r() * notInWord.length)];
+  valid.push(`No letter: ${randomLetter.toUpperCase()}`);
+ }
+ 
+ return valid.slice(0, 4);
+}
+
+function violates(w){
+ for(const r of constraints){
+  if(r.startsWith("Exact length") && w.length != +r.split(": ")[1]) return "Wrong length";
+  if(r === "No double letters" && /(.)\1/.test(w)) return "Double letters not allowed";
+  if(r === "Must contain at least one vowel" && !/[aeiou]/.test(w)) return "Needs a vowel";
+  if(r.startsWith("No letter:")){
+   const l = r.split(": ")[1].toLowerCase();
+   if(w.includes(l)) return `Contains forbidden letter: ${l.toUpperCase()}`;
+  }
+  if(r === "First letter is a vowel" && !/^[aeiou]/.test(w)) return "Must start with vowel";
+  if(r === "Last letter is a vowel" && !/[aeiou]$/.test(w)) return "Must end with vowel";
+ }
+ return null;
+}
+
+function update(){
+ counter.textContent = `Guesses left: ${guessesLeft}`;
+}
+
+function getHint(){
+ if(hintUsed) return;
+ 
+ hintUsed = true;
+ const answer = puzzles[puzzleIndex].a;
+ const firstLetter = answer[0].toUpperCase();
+ 
+ message.textContent = `💡 Hint: The word starts with "${firstLetter}"`;
+ message.style.color = "var(--accent-soft)";
+ 
+ // Disable the help button
+ document.getElementById('helpBtn').disabled = true;
+ 
+ // Deduct 20 points for using hint
+ totalPoints = Math.max(0, totalPoints - 20);
+ updateStats();
+ saveProgress();
+}
+
+function updateStats(){
+ document.getElementById('categoryTitle').textContent = 'STATS';
+ document.getElementById('totalPoints').textContent = totalPoints;
+ document.getElementById('streakDisplay').textContent = streak;
+ document.getElementById('puzzleNum').textContent = `${categoryIndex + 1}/${WORD_CATEGORIES.length} - ${puzzleIndex + 1}/${puzzles.length}`;
+ 
+ const totalPuzzles = WORD_CATEGORIES.reduce((sum, cat) => sum + cat.words.length, 0);
+ let completedPuzzles = 0;
+ for(let c = 0; c < categoryIndex; c++) {
+   completedPuzzles += WORD_CATEGORIES[c].words.length;
+ }
+ completedPuzzles += puzzleIndex;
+ 
+ const progress = (completedPuzzles / totalPuzzles) * 100;
+ document.getElementById('progressFill').style.width = progress + '%';
+}
+
+function submitGuess(){
+ const w = guess.value.toLowerCase().trim();
+ if(!w) return;
+
+ guessesLeft--;
+ update();
+ saveProgress();
+
+ const err = violates(w);
+ guess.value = "";
+
+ if(err){
+  message.textContent = "❌ " + err;
+  if(guessesLeft === 0) fail();
+  return;
+ }
+
+ if(w === puzzles[puzzleIndex].a){
+  win();
+ }else{
+  message.textContent = "❌ Wrong word";
+  if(guessesLeft === 0) fail();
+ }
+}
+
+function win(){
+ // Calculate points (start at 100, lose 10 per wrong guess)
+ const pointsEarned = 100 - ((maxGuesses - guessesLeft) * 10);
+ totalPoints += pointsEarned;
+ streak++;
+ 
+ // Create success overlay
+ const overlay = document.createElement("div");
+ overlay.className = "success-overlay";
+ 
+ const successText = document.createElement("div");
+ successText.className = "success-text";
+ successText.textContent = "CORRECT!";
+ 
+ const pointsText = document.createElement("div");
+ pointsText.className = "points-earned";
+ pointsText.textContent = `+${pointsEarned} points`;
+ 
+ overlay.appendChild(successText);
+ overlay.appendChild(pointsText);
+ 
+ // Add confetti
+ for(let j = 0; j < 50; j++){
+  const confetti = document.createElement("div");
+  confetti.className = "confetti";
+  confetti.style.left = Math.random() * 100 + '%';
+  confetti.style.background = ['#34d399', '#3b82f6', '#fb7185'][Math.floor(Math.random() * 3)];
+  confetti.style.animationDelay = Math.random() * .3 + 's';
+  confetti.style.animationDuration = (Math.random() * 1 + 1.5) + 's';
+  overlay.appendChild(confetti);
+ }
+ 
+ document.body.appendChild(overlay);
+ 
+ setTimeout(() => {
+  overlay.remove();
+  nextPuzzle();
+ }, 2500);
+}
+
+function fail(){
+ streak = 0;
+ message.textContent = "❌ Answer: " + puzzles[puzzleIndex].a.toUpperCase();
+ setTimeout(() => {
+  nextPuzzle();
+ }, 2000);
+}
+
+function nextPuzzle(){
+ puzzleIndex++;
+ 
+ // Check if we completed this category
+ if(puzzleIndex >= puzzles.length){
+  categoryIndex++;
+  puzzleIndex = 0;
+  
+  // Check if we beat the entire game
+  if(categoryIndex >= WORD_CATEGORIES.length){
+   showVictoryScreen();
+   return;
+  }
+  
+  // Move to next category
+  setup();
+ }
+ 
+ load();
+ updateStats();
+}
+
+function showVictoryScreen(){
+ document.getElementById("game").style.display = "none";
+ const victory = document.getElementById("victory");
+ victory.style.display = "flex";
+ document.getElementById("finalScore").textContent = totalPoints;
+}
+
+function load(){
+ guessesLeft = maxGuesses;
+ hintUsed = false;
+ clue.textContent = puzzles[puzzleIndex].clues.join(" • ");
+ constraints = genConstraints(puzzles[puzzleIndex].a);
+ constraintsEl.innerHTML = constraints.map(r => "• " + r).join("<br>");
+ message.textContent = "";
+ message.style.color = "";
+ 
+ // Re-enable help button
+ const helpBtn = document.getElementById('helpBtn');
+ if(helpBtn) helpBtn.disabled = false;
+ 
+ // Update category display
+ document.getElementById('currentCategoryDisplay').textContent = currentCategory;
+ 
+ update();
+ saveProgress();
+}
+
+function saveProgress() {
+  const progress = {
+    categoryIndex: categoryIndex,
+    puzzleIndex: puzzleIndex,
+    guesses: guessesLeft,
+    category: currentCategory,
+    points: totalPoints,
+    streak: streak,
+    hintUsed: hintUsed
+  };
+  
+  // Save to localStorage as backup
+  localStorage.setItem('ruleout_progress', JSON.stringify(progress));
+  
+  // Save to Firebase if user is signed in
+  if (currentUser && db) {
+    db.collection('progress').doc(currentUser.uid).set(progress)
+      .catch((error) => {
+        console.error('Error saving to Firebase:', error);
+      });
+  }
+}
+
+async function loadProgress() {
+  // Try Firebase first if user is signed in
+  if (currentUser && db) {
+    try {
+      const doc = await db.collection('progress').doc(currentUser.uid).get();
+      if (doc.exists) {
+        const progress = doc.data();
+        
+        categoryIndex = progress.categoryIndex || 0;
+        puzzleIndex = progress.puzzleIndex || 0;
+        guessesLeft = progress.guesses || maxGuesses;
+        currentCategory = progress.category || "";
+        totalPoints = progress.points || 0;
+        streak = progress.streak || 0;
+        hintUsed = progress.hintUsed || false;
+        
+        // Update help button state
+        if(hintUsed) {
+          const helpBtn = document.getElementById('helpBtn');
+          if(helpBtn) helpBtn.disabled = true;
+        }
+        
+        return true;
+      }
+    } catch (error) {
+      console.error('Error loading from Firebase:', error);
+    }
+  }
+  
+  // Fall back to localStorage
+  const saved = localStorage.getItem('ruleout_progress');
+  if (saved) {
+    const progress = JSON.parse(saved);
+    
+    categoryIndex = progress.categoryIndex || 0;
+    puzzleIndex = progress.puzzleIndex || 0;
+    guessesLeft = progress.guesses || maxGuesses;
+    currentCategory = progress.category || "";
+    totalPoints = progress.points || 0;
+    streak = progress.streak || 0;
+    hintUsed = progress.hintUsed || false;
+    
+    // Update help button state
+    if(hintUsed) {
+      const helpBtn = document.getElementById('helpBtn');
+      if(helpBtn) helpBtn.disabled = true;
+    }
+    
+    return true;
+  }
+  return false;
+}
+
+const clue = document.getElementById("clue");
+const constraintsEl = document.getElementById("constraints");
+const counter = document.getElementById("counter");
+const message = document.getElementById("message");
+const guess = document.getElementById("guess");
+
+function playAgain(){
+  // Clear all progress
+  categoryIndex = 0;
+  puzzleIndex = 0;
+  guessesLeft = maxGuesses;
+  totalPoints = 0;
+  streak = 0;
+  hintUsed = false;
+  
+  // Clear saved data
+  localStorage.removeItem('ruleout_progress');
+  if (currentUser && db) {
+    db.collection('progress').doc(currentUser.uid).delete();
+  }
+  
+  // Restart game
+  document.getElementById("victory").style.display = "none";
+  document.getElementById("game").style.display = "block";
+  setup();
+  load();
+  updateStats();
+}
+</script>
+
+</body>
+</html>

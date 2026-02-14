@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RULEOUT - Join Tournament</title>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+<style>
+:root{--bg:#050b1a;--panel:#0b1630;--card:#0f1f45;--text:#e8f0ff;--muted:#8fa6ff;--accent:#3b82f6;--accent-soft:#60a5fa;--danger:#fb7185;--success:#34d399;--warning:#f59e0b}
+*{box-sizing:border-box;margin:0;padding:0}
+body{min-height:100vh;font-family:system-ui,-apple-system,sans-serif;background:radial-gradient(1000px 600px at top,#0f2a66,var(--bg));color:var(--text);display:flex;align-items:center;justify-content:center;padding:20px}
+.screen{display:none;flex-direction:column;align-items:center;max-width:600px;width:100%}
+.screen.active{display:flex;animation:fadeIn .4s}
+@keyframes fadeIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+h1{font-size:64px;letter-spacing:.3em;margin-bottom:20px}
+p{font-size:18px;color:var(--muted);margin-bottom:30px;text-align:center}
+.input-group{width:100%;margin-bottom:20px}
+label{display:block;font-size:14px;font-weight:700;margin-bottom:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em}
+input{width:100%;padding:20px 24px;background:var(--card);border:2px solid rgba(59,130,246,.3);border-radius:12px;color:var(--text);font-size:20px;font-weight:700;text-align:center;text-transform:uppercase;letter-spacing:.2em}
+input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(59,130,246,.2)}
+.btn{width:100%;padding:24px;background:linear-gradient(135deg,var(--accent),var(--accent-soft));border:none;border-radius:12px;color:white;font-size:20px;font-weight:900;cursor:pointer;text-transform:uppercase;letter-spacing:.1em;transition:all .3s;box-shadow:0 8px 24px rgba(59,130,246,.4)}
+.btn:hover:not(:disabled){transform:translateY(-3px);box-shadow:0 12px 32px rgba(59,130,246,.5)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.waiting{text-align:center;padding:60px 40px;background:linear-gradient(180deg,var(--card),var(--panel));border-radius:20px;margin:20px 0}
+.waiting h2{font-size:32px;margin-bottom:16px;color:var(--accent-soft)}
+.room-badge{display:inline-block;background:var(--accent);padding:12px 32px;border-radius:999px;font-size:48px;font-weight:900;letter-spacing:.3em;margin:20px 0}
+.question-card{background:linear-gradient(180deg,var(--card),var(--panel));padding:40px;border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,.5);margin-bottom:30px}
+.question-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid rgba(59,130,246,.2)}
+.q-num{font-size:16px;color:var(--muted);font-weight:700}
+.timer{font-size:36px;font-weight:900;color:var(--warning)}
+.timer.low{color:var(--danger);animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+.clues{font-size:24px;line-height:1.6;margin-bottom:28px;min-height:80px}
+.constraints{background:rgba(251,113,133,.08);border:2px solid var(--danger);border-radius:12px;padding:20px;margin-bottom:24px}
+.constraints h4{color:var(--danger);font-size:14px;font-weight:800;margin-bottom:12px;text-transform:uppercase}
+.constraint{color:var(--danger);font-size:14px;line-height:1.8}
+.answer-input{margin-bottom:16px}
+.score-display{text-align:center;padding:30px;background:linear-gradient(135deg,var(--success),#10b981);border-radius:16px;margin-bottom:20px}
+.score-label{font-size:16px;opacity:.9;margin-bottom:8px}
+.score-value{font-size:56px;font-weight:900}
+.result-overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.8);backdrop-filter:blur(10px);z-index:1000}
+.result-overlay.active{display:flex;animation:fadeIn .3s}
+.result-content{text-align:center;padding:60px;background:linear-gradient(180deg,var(--card),var(--panel));border-radius:24px;max-width:500px}
+.result-icon{font-size:80px;margin-bottom:20px}
+.result-text{font-size:36px;font-weight:900;margin-bottom:12px}
+.result-points{font-size:48px;font-weight:900;color:var(--success)}
+.final-results{text-align:center;padding:40px}
+.final-results h1{font-size:56px;margin-bottom:20px;background:linear-gradient(135deg,var(--success),var(--warning));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.final-rank{font-size:72px;margin:20px 0}
+.final-score{font-size:48px;font-weight:900;color:var(--success);margin:20px 0}
+</style>
+</head>
+<body>
+
+<div class="screen active" id="joinScreen">
+<h1>RULEOUT</h1>
+<p>Enter the room code to join the tournament</p>
+<div class="input-group">
+<label>Your Name</label>
+<input type="text" id="playerName" placeholder="ENTER NAME" maxlength="20">
+</div>
+<div class="input-group">
+<label>Room Code</label>
+<input type="text" id="roomCodeInput" placeholder="XXXXXX" maxlength="6">
+</div>
+<button class="btn" onclick="joinRoom()">Join Tournament</button>
+</div>
+
+<div class="screen" id="waitingScreen">
+<div class="waiting">
+<h2>Joined Room</h2>
+<div class="room-badge" id="roomDisplay"></div>
+<p style="font-size:24px;margin-top:20px">Waiting for host to start...</p>
+</div>
+</div>
+
+<div class="screen" id="gameScreen">
+<div class="score-display">
+<div class="score-label">Your Score</div>
+<div class="score-value" id="playerScore">0</div>
+</div>
+<div class="question-card">
+<div class="question-header">
+<div class="q-num" id="qNum">Question 1/20</div>
+<div class="timer" id="timer">30</div>
+</div>
+<div class="clues" id="clues"></div>
+<div class="constraints">
+<h4>Constraints:</h4>
+<div id="constraintsList"></div>
+</div>
+<div class="answer-input">
+<input type="text" id="answerInput" placeholder="YOUR ANSWER" autocomplete="off">
+</div>
+<button class="btn" onclick="submitAnswer()">Submit Answer</button>
+</div>
+</div>
+
+<div class="screen" id="resultsScreen">
+<div class="final-results">
+<h1>Tournament Complete!</h1>
+<div class="final-rank" id="finalRank"></div>
+<div class="final-score" id="finalScore"></div>
+<p style="font-size:20px;margin-top:30px">Thanks for playing!</p>
+</div>
+</div>
+
+<div class="result-overlay" id="resultOverlay">
+<div class="result-content">
+<div class="result-icon" id="resultIcon"></div>
+<div class="result-text" id="resultText"></div>
+<div class="result-points" id="resultPoints"></div>
+</div>
+</div>
+
+<script>
+const firebaseConfig={apiKey:"AIzaSyDpncc72bVroaBydIlfk4f4Il0ag0dPPP0",authDomain:"ruleout-14bdb.firebaseapp.com",projectId:"ruleout-14bdb",databaseURL:"https://ruleout-14bdb-default-rtdb.firebaseio.com",storageBucket:"ruleout-14bdb.firebasestorage.app",messagingSenderId:"497779197134",appId:"1:497779197134:web:3194021bd696fa1b437c9f"};
+firebase.initializeApp(firebaseConfig);
+const db=firebase.database();
+let roomRef=null,playerId=null,playerName='',currentQuestion=null,questionStartTime=0,hasAnswered=false,playerScore=0;
+async function joinRoom(){
+const name=document.getElementById('playerName').value.trim();
+const code=document.getElementById('roomCodeInput').value.trim().toUpperCase();
+if(!name||!code){alert('Please enter your name and room code');return}
+const snapshot=await db.ref(`rooms/${code}`).once('value');
+if(!snapshot.exists()){alert('Room not found!');return}
+const room=snapshot.val();
+if(room.status!=='lobby'){alert('Game already started!');return}
+playerName=name;
+playerId=Date.now().toString()+Math.random().toString(36).substr(2,9);
+roomRef=db.ref(`rooms/${code}`);
+await roomRef.child(`players/${playerId}`).set({name:playerName,score:0,joinedAt:Date.now()});
+document.getElementById('roomDisplay').textContent=code;
+showScreen('waitingScreen');
+listenForGameStart();
+}
+function listenForGameStart(){
+roomRef.child('status').on('value',snapshot=>{
+if(snapshot.val()==='playing'){showScreen('gameScreen');listenForQuestions()}
+else if(snapshot.val()==='finished'){showFinalResults()}
+});
+}
+function listenForQuestions(){
+roomRef.child('currentQuestion').on('value',async snapshot=>{
+const qIndex=snapshot.val();
+const questionsSnapshot=await roomRef.child('questions').once('value');
+const questions=questionsSnapshot.val();
+if(qIndex<questions.length){
+currentQuestion=questions[qIndex];
+questionStartTime=Date.now();
+hasAnswered=false;
+displayQuestion(currentQuestion);
+startTimer(currentQuestion.timeLimit);
+document.getElementById('answerInput').value='';
+document.getElementById('answerInput').disabled=false
+}else{showFinalResults()}
+});
+roomRef.child(`players/${playerId}/score`).on('value',snapshot=>{
+playerScore=snapshot.val()||0;
+document.getElementById('playerScore').textContent=playerScore
+});
+}
+function displayQuestion(q){
+document.getElementById('qNum').textContent=`Question ${q.questionNumber}/20`;
+document.getElementById('clues').textContent=q.clues.join(' • ');
+document.getElementById('constraintsList').innerHTML=q.constraints.map(c=>`<div class="constraint">• ${c}</div>`).join('');
+}
+function startTimer(seconds){
+let time=seconds;
+const el=document.getElementById('timer');
+el.classList.remove('low');
+const interval=setInterval(()=>{
+time--;
+el.textContent=time;
+if(time<=5)el.classList.add('low');
+if(time<=0){
+clearInterval(interval);
+if(!hasAnswered){
+document.getElementById('answerInput').disabled=true;
+showResult(false,0,'⏰','Time\'s Up!','0 points')
+}
+}
+},1000);
+}
+async function submitAnswer(){
+if(hasAnswered)return;
+const answer=document.getElementById('answerInput').value.toLowerCase().trim();
+if(!answer){alert('Please enter an answer');return}
+hasAnswered=true;
+document.getElementById('answerInput').disabled=true;
+const correct=answer===currentQuestion.answer;
+const timeElapsed=(Date.now()-questionStartTime)/1000;
+const timeBonus=Math.max(0,currentQuestion.timeLimit-timeElapsed);
+const points=correct?Math.floor(currentQuestion.points+(timeBonus*5)):0;
+if(correct){
+await roomRef.child(`players/${playerId}/score`).set(playerScore+points);
+showResult(true,points,'✅','Correct!',`+${points} points`)
+}else{
+showResult(false,0,'❌','Wrong Answer',`Answer: ${currentQuestion.answer.toUpperCase()}`)
+}
+}
+function showResult(correct,points,icon,text,subtext){
+document.getElementById('resultIcon').textContent=icon;
+document.getElementById('resultText').textContent=text;
+document.getElementById('resultPoints').textContent=subtext;
+document.getElementById('resultOverlay').classList.add('active');
+setTimeout(()=>{
+document.getElementById('resultOverlay').classList.remove('active')
+},2500);
+}
+async function showFinalResults(){
+const playersSnapshot=await roomRef.child('players').once('value');
+const players=playersSnapshot.val();
+const playerArray=Object.entries(players).map(([id,p])=>({id,name:p.name,score:p.score||0})).sort((a,b)=>b.score-a.score);
+const myRank=playerArray.findIndex(p=>p.id===playerId)+1;
+const myScore=playerArray.find(p=>p.id===playerId)?.score||0;
+const rankEmoji=myRank===1?'🥇':myRank===2?'🥈':myRank===3?'🥉':`#${myRank}`;
+document.getElementById('finalRank').textContent=rankEmoji;
+document.getElementById('finalScore').textContent=`${myScore} points`;
+showScreen('resultsScreen');
+}
+function showScreen(id){
+document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+document.getElementById(id).classList.add('active');
+}
+</script>
+</body>
+</html>

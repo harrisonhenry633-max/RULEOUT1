@@ -1,0 +1,1171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RULEOUT - Host Tournament</title>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
+<style>
+:root{
+ --bg:#050b1a;
+ --panel:#0b1630;
+ --card:#0f1f45;
+ --text:#e8f0ff;
+ --muted:#8fa6ff;
+ --accent:#3b82f6;
+ --accent-soft:#60a5fa;
+ --danger:#fb7185;
+ --success:#34d399;
+ --warning:#f59e0b;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+
+body{
+ min-height:100vh;
+ font-family:system-ui,-apple-system,Segoe UI,sans-serif;
+ background:radial-gradient(1000px 600px at top,#0f2a66,var(--bg));
+ color:var(--text);
+ overflow-x:hidden;
+}
+
+/* SCREENS */
+.screen{
+ position:fixed;
+ inset:0;
+ display:none;
+ flex-direction:column;
+ align-items:center;
+ justify-content:center;
+ padding:40px;
+ animation:fadeIn .4s ease;
+}
+
+.screen.active{display:flex}
+
+@keyframes fadeIn{
+ from{opacity:0;transform:translateY(20px)}
+ to{opacity:1;transform:translateY(0)}
+}
+
+/* AUTH SCREEN */
+.auth-container{
+ text-align:center;
+ max-width:500px;
+}
+
+.auth-container h1{
+ font-size:68px;
+ letter-spacing:.35em;
+ margin-bottom:20px;
+ background:linear-gradient(135deg,var(--accent),var(--success));
+ -webkit-background-clip:text;
+ -webkit-text-fill-color:transparent;
+}
+
+.auth-container p{
+ font-size:18px;
+ color:var(--muted);
+ margin-bottom:40px;
+}
+
+.google-signin{
+ padding:18px 66px;
+ background:linear-gradient(135deg,var(--accent),var(--accent-soft));
+ color:white;
+ border:none;
+ border-radius:999px;
+ font-size:18px;
+ font-weight:800;
+ cursor:pointer;
+ display:inline-flex;
+ align-items:center;
+ gap:10px;
+ box-shadow:0 8px 24px rgba(59,130,246,.4);
+ transition:all .3s;
+}
+
+.google-signin:hover{
+ transform:translateY(-2px);
+ box-shadow:0 12px 32px rgba(59,130,246,.5);
+}
+
+.google-icon{width:20px;height:20px}
+
+/* CATEGORY SELECTION */
+.category-container h1{
+ font-size:56px;
+ letter-spacing:.2em;
+ margin-bottom:20px;
+ text-align:center;
+}
+
+.category-container p{
+ font-size:18px;
+ color:var(--muted);
+ margin-bottom:40px;
+ text-align:center;
+}
+
+.category-grid{
+ display:grid;
+ grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+ gap:20px;
+ max-width:900px;
+}
+
+.category-btn{
+ padding:50px 30px;
+ background:linear-gradient(180deg,var(--card),var(--panel));
+ border:3px solid rgba(59,130,246,.3);
+ border-radius:20px;
+ color:var(--text);
+ font-size:22px;
+ font-weight:800;
+ cursor:pointer;
+ transition:all .3s;
+ text-transform:uppercase;
+ letter-spacing:.12em;
+}
+
+.category-btn:hover{
+ transform:translateY(-6px);
+ border-color:var(--accent);
+ box-shadow:0 12px 40px rgba(59,130,246,.5);
+}
+
+.category-icon{
+ font-size:48px;
+ display:block;
+ margin-bottom:16px;
+}
+
+/* LOBBY */
+.lobby-container{
+ max-width:1200px;
+ width:100%;
+}
+
+.room-code-display{
+ background:linear-gradient(135deg,var(--accent),var(--accent-soft));
+ padding:50px;
+ border-radius:28px;
+ text-align:center;
+ margin-bottom:40px;
+ box-shadow:0 20px 60px rgba(59,130,246,.4);
+ position:relative;
+ overflow:hidden;
+}
+
+.room-code-display::before{
+ content:'';
+ position:absolute;
+ inset:0;
+ background:linear-gradient(45deg,transparent,rgba(255,255,255,.1),transparent);
+ animation:shimmer 3s infinite;
+}
+
+@keyframes shimmer{
+ 0%{transform:translateX(-100%)}
+ 100%{transform:translateX(100%)}
+}
+
+.room-code-display h2{
+ font-size:24px;
+ margin-bottom:16px;
+ opacity:.95;
+ position:relative;
+}
+
+.room-code{
+ font-size:84px;
+ font-weight:900;
+ letter-spacing:.35em;
+ text-shadow:0 4px 16px rgba(0,0,0,.3);
+ position:relative;
+}
+
+.players-section{
+ background:linear-gradient(180deg,var(--card),var(--panel));
+ padding:40px;
+ border-radius:24px;
+ margin-bottom:30px;
+ box-shadow:0 8px 32px rgba(0,0,0,.3);
+}
+
+.players-section h3{
+ font-size:32px;
+ margin-bottom:28px;
+ color:var(--accent-soft);
+ display:flex;
+ align-items:center;
+ gap:12px;
+}
+
+.player-count-badge{
+ background:var(--accent);
+ color:white;
+ padding:4px 16px;
+ border-radius:999px;
+ font-size:20px;
+}
+
+.players-grid{
+ display:grid;
+ grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
+ gap:16px;
+}
+
+.player-card{
+ background:rgba(59,130,246,.1);
+ padding:20px 24px;
+ border-radius:14px;
+ border:2px solid rgba(59,130,246,.3);
+ font-size:18px;
+ font-weight:700;
+ display:flex;
+ align-items:center;
+ gap:12px;
+ animation:slideIn .3s ease;
+}
+
+@keyframes slideIn{
+ from{opacity:0;transform:translateX(-20px)}
+ to{opacity:1;transform:translateX(0)}
+}
+
+.player-avatar{
+ width:40px;
+ height:40px;
+ border-radius:50%;
+ background:linear-gradient(135deg,var(--accent),var(--success));
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ font-size:20px;
+ font-weight:900;
+}
+
+.start-game-btn{
+ width:100%;
+ padding:28px;
+ background:linear-gradient(135deg,var(--success),#10b981);
+ border:none;
+ border-radius:18px;
+ color:white;
+ font-size:26px;
+ font-weight:900;
+ cursor:pointer;
+ text-transform:uppercase;
+ letter-spacing:.12em;
+ transition:all .3s;
+ box-shadow:0 8px 24px rgba(52,211,153,.3);
+}
+
+.start-game-btn:hover:not(:disabled){
+ transform:translateY(-3px);
+ box-shadow:0 16px 48px rgba(52,211,153,.5);
+}
+
+.start-game-btn:disabled{
+ opacity:.4;
+ cursor:not-allowed;
+}
+
+/* GAME SCREEN */
+.game-container{
+ max-width:1600px;
+ width:100%;
+ display:grid;
+ grid-template-columns:1.2fr 450px;
+ gap:40px;
+}
+
+.question-panel{
+ background:linear-gradient(180deg,var(--card),var(--panel));
+ padding:50px;
+ border-radius:28px;
+ box-shadow:0 24px 72px rgba(0,0,0,.5);
+}
+
+.question-header{
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+ margin-bottom:36px;
+ padding-bottom:24px;
+ border-bottom:3px solid rgba(59,130,246,.2);
+}
+
+.question-number{
+ font-size:20px;
+ color:var(--muted);
+ font-weight:800;
+ text-transform:uppercase;
+ letter-spacing:.1em;
+}
+
+.question-timer{
+ font-size:48px;
+ font-weight:900;
+ color:var(--warning);
+ min-width:80px;
+ text-align:right;
+}
+
+.question-timer.low{
+ color:var(--danger);
+ animation:pulse 1s infinite;
+}
+
+@keyframes pulse{
+ 0%,100%{transform:scale(1)}
+ 50%{transform:scale(1.1)}
+}
+
+.question-text{
+ font-size:32px;
+ line-height:1.5;
+ margin-bottom:36px;
+ min-height:120px;
+ font-weight:600;
+}
+
+.question-constraints{
+ background:rgba(251,113,133,.08);
+ border:3px solid var(--danger);
+ border-radius:16px;
+ padding:28px;
+ margin-bottom:36px;
+}
+
+.question-constraints h4{
+ color:var(--danger);
+ margin-bottom:16px;
+ font-size:18px;
+ font-weight:800;
+ text-transform:uppercase;
+}
+
+.constraint-item{
+ color:var(--danger);
+ font-size:16px;
+ line-height:2;
+ font-weight:600;
+}
+
+.host-controls{
+ display:flex;
+ gap:20px;
+}
+
+.next-btn,.end-btn{
+ flex:1;
+ padding:24px;
+ border:none;
+ border-radius:14px;
+ font-size:20px;
+ font-weight:900;
+ cursor:pointer;
+ text-transform:uppercase;
+ transition:all .3s;
+ letter-spacing:.08em;
+}
+
+.next-btn{
+ background:linear-gradient(135deg,var(--accent),var(--accent-soft));
+ color:white;
+ box-shadow:0 8px 24px rgba(59,130,246,.3);
+}
+
+.next-btn:hover{
+ transform:translateY(-3px);
+ box-shadow:0 12px 32px rgba(59,130,246,.5);
+}
+
+.end-btn{
+ background:linear-gradient(135deg,var(--danger),#f87171);
+ color:white;
+ box-shadow:0 8px 24px rgba(251,113,133,.3);
+}
+
+.end-btn:hover{
+ transform:translateY(-3px);
+ box-shadow:0 12px 32px rgba(251,113,133,.5);
+}
+
+/* LEADERBOARD */
+.leaderboard-panel{
+ background:linear-gradient(180deg,var(--card),var(--panel));
+ padding:36px;
+ border-radius:28px;
+ box-shadow:0 24px 72px rgba(0,0,0,.5);
+ max-height:calc(100vh - 80px);
+ overflow-y:auto;
+}
+
+.leaderboard-panel h3{
+ font-size:28px;
+ margin-bottom:28px;
+ color:var(--success);
+ text-align:center;
+ text-transform:uppercase;
+ letter-spacing:.18em;
+}
+
+.leaderboard-item{
+ display:flex;
+ align-items:center;
+ gap:20px;
+ padding:20px;
+ background:rgba(255,255,255,.04);
+ border-radius:14px;
+ margin-bottom:14px;
+ transition:all .3s;
+ border:2px solid transparent;
+}
+
+.leaderboard-item:hover{
+ background:rgba(255,255,255,.08);
+ border-color:rgba(59,130,246,.3);
+}
+
+.rank{
+ font-size:32px;
+ font-weight:900;
+ min-width:50px;
+ text-align:center;
+}
+
+.rank.first{
+ color:var(--warning);
+ font-size:40px;
+}
+
+.rank.second{
+ color:#d1d5db;
+ font-size:36px;
+}
+
+.rank.third{
+ color:#cd7f32;
+}
+
+.player-info{flex:1}
+
+.player-name{
+ font-size:20px;
+ font-weight:800;
+}
+
+.player-score{
+ font-size:14px;
+ color:var(--muted);
+ margin-top:4px;
+}
+
+.points{
+ font-size:32px;
+ font-weight:900;
+ color:var(--success);
+}
+
+/* RESULTS */
+.results-container{
+ max-width:1000px;
+ text-align:center;
+}
+
+.results-container h1{
+ font-size:72px;
+ margin-bottom:20px;
+ background:linear-gradient(135deg,var(--success),var(--warning));
+ -webkit-background-clip:text;
+ -webkit-text-fill-color:transparent;
+}
+
+.results-subtitle{
+ font-size:24px;
+ color:var(--muted);
+ margin-bottom:50px;
+}
+
+.podium{
+ display:flex;
+ align-items:flex-end;
+ justify-content:center;
+ gap:30px;
+ margin-bottom:60px;
+}
+
+.podium-place{
+ background:linear-gradient(180deg,var(--card),var(--panel));
+ padding:40px 30px;
+ border-radius:20px;
+ min-width:240px;
+ transition:all .3s;
+}
+
+.podium-place:hover{
+ transform:translateY(-8px);
+}
+
+.podium-place.first{
+ transform:scale(1.15);
+ border:4px solid var(--warning);
+ box-shadow:0 20px 60px rgba(245,158,11,.4);
+}
+
+.podium-place.second{
+ border:4px solid #d1d5db;
+ box-shadow:0 16px 48px rgba(209,213,219,.3);
+}
+
+.podium-place.third{
+ border:4px solid #cd7f32;
+ box-shadow:0 16px 48px rgba(205,127,50,.3);
+}
+
+.podium-rank{
+ font-size:64px;
+ margin-bottom:16px;
+}
+
+.podium-name{
+ font-size:24px;
+ font-weight:800;
+ margin-bottom:12px;
+}
+
+.podium-score{
+ font-size:40px;
+ font-weight:900;
+ color:var(--success);
+}
+
+.new-game-btn{
+ padding:24px 72px;
+ background:linear-gradient(135deg,var(--accent),var(--accent-soft));
+ border:none;
+ border-radius:999px;
+ color:white;
+ font-size:22px;
+ font-weight:900;
+ cursor:pointer;
+ text-transform:uppercase;
+ box-shadow:0 8px 24px rgba(59,130,246,.4);
+ transition:all .3s;
+}
+
+.new-game-btn:hover{
+ transform:translateY(-3px);
+ box-shadow:0 12px 32px rgba(59,130,246,.5);
+}
+
+@media(max-width:1200px){
+ .game-container{grid-template-columns:1fr}
+ .leaderboard-panel{max-height:400px}
+}
+
+@media(max-width:768px){
+ .category-grid{grid-template-columns:1fr}
+ .room-code{font-size:60px}
+ .podium{flex-direction:column;align-items:center}
+ .podium-place.first{transform:scale(1)}
+}
+</style>
+</head>
+
+<body>
+
+<!-- AUTH SCREEN -->
+<div class="screen active" id="authScreen">
+ <div class="auth-container">
+  <h1>RULEOUT</h1>
+  <p>Host a tournament and challenge your friends!</p>
+  <button class="google-signin" onclick="signInWithGoogle()">
+   <svg class="google-icon" viewBox="0 0 24 24">
+    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+   </svg>
+   Sign in with Google
+  </button>
+ </div>
+</div>
+
+<!-- CATEGORY SELECTION -->
+<div class="screen" id="categoryScreen">
+ <div class="category-container">
+  <h1>Choose Category</h1>
+  <p>Select a category to generate 20 tournament questions</p>
+  <div class="category-grid">
+   <button class="category-btn" onclick="selectCategory('SPORTS')">
+    <span class="category-icon">⚽</span>
+    Sports
+   </button>
+   <button class="category-btn" onclick="selectCategory('FOOD')">
+    <span class="category-icon">🍕</span>
+    Food
+   </button>
+   <button class="category-btn" onclick="selectCategory('HISTORY')">
+    <span class="category-icon">📜</span>
+    History
+   </button>
+   <button class="category-btn" onclick="selectCategory('POLITICS')">
+    <span class="category-icon">🏛️</span>
+    Politics
+   </button>
+   <button class="category-btn" onclick="selectCategory('MATH')">
+    <span class="category-icon">🔢</span>
+    Math
+   </button>
+  </div>
+ </div>
+</div>
+
+<!-- LOBBY -->
+<div class="screen" id="lobbyScreen">
+ <div class="lobby-container">
+  <div class="room-code-display">
+   <h2>Room Code</h2>
+   <div class="room-code" id="roomCode">------</div>
+  </div>
+  
+  <div class="players-section">
+   <h3>
+    Players
+    <span class="player-count-badge" id="playerCount">0</span>
+   </h3>
+   <div class="players-grid" id="playersGrid">
+    <div style="text-align:center;padding:40px;color:var(--muted);grid-column:1/-1">
+     Waiting for players to join...
+    </div>
+   </div>
+  </div>
+  
+  <button class="start-game-btn" id="startGameBtn" onclick="startTournament()" disabled>
+   Waiting for Players...
+  </button>
+ </div>
+</div>
+
+<!-- GAME -->
+<div class="screen" id="gameScreen">
+ <div class="game-container">
+  <div class="question-panel">
+   <div class="question-header">
+    <div class="question-number" id="questionNumber">Question 1/20</div>
+    <div class="question-timer" id="timer">30</div>
+   </div>
+   
+   <div class="question-text" id="questionText"></div>
+   
+   <div class="question-constraints">
+    <h4>Constraints:</h4>
+    <div id="constraintsList"></div>
+   </div>
+   
+   <div class="host-controls">
+    <button class="next-btn" onclick="nextQuestion()">Next Question →</button>
+    <button class="end-btn" onclick="endTournament()">End Tournament</button>
+   </div>
+  </div>
+  
+  <div class="leaderboard-panel">
+   <h3>🏆 Live Leaderboard</h3>
+   <div id="leaderboardList">
+    <div style="text-align:center;padding:40px;color:var(--muted)">
+     Waiting for answers...
+    </div>
+   </div>
+  </div>
+ </div>
+</div>
+
+<!-- RESULTS -->
+<div class="screen" id="resultsScreen">
+ <div class="results-container">
+  <h1>🎉 Tournament Complete!</h1>
+  <p class="results-subtitle">Here are your champions</p>
+  
+  <div class="podium" id="podium"></div>
+  
+  <button class="new-game-btn" onclick="location.reload()">New Tournament</button>
+ </div>
+</div>
+
+<script>
+// Firebase Config
+const firebaseConfig = {
+  apiKey: "AIzaSyDpncc72bVroaBydIlfk4f4Il0ag0dPPP0",
+  authDomain: "ruleout-14bdb.firebaseapp.com",
+  projectId: "ruleout-14bdb",
+  databaseURL: "https://ruleout-14bdb-default-rtdb.firebaseio.com",
+  storageBucket: "ruleout-14bdb.firebasestorage.app",
+  messagingSenderId: "497779197134",
+  appId: "1:497779197134:web:3194021bd696fa1b437c9f"
+};
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const database = firebase.database();
+
+// Game State
+let currentUser = null;
+let roomId = null;
+let selectedCategory = null;
+let questions = [];
+let currentQuestionIndex = 0;
+let timerInterval = null;
+let roomRef = null;
+
+// Question Banks
+const QUESTION_BANKS = {
+  SPORTS: [
+    {clues: ["Racket sport", "Shuttlecock flies", "Fast-paced rally"], answer: "badminton", difficulty: 1},
+    {clues: ["Winter sliding", "Flat on stomach", "Icy track"], answer: "luge", difficulty: 1},
+    {clues: ["Bow weapon", "Target practice", "Robin Hood skill"], answer: "archery", difficulty: 2},
+    {clues: ["Ring combat", "Submission holds", "Greco-Roman style"], answer: "wrestling", difficulty: 2},
+    {clues: ["Water blade", "Stand up motion", "Lake gliding"], answer: "kayak", difficulty: 2},
+    {clues: ["Vault apparatus", "Balance beam", "Floor routine"], answer: "gymnastics", difficulty: 3},
+    {clues: ["Stick and puck", "Face-off circle", "Penalty box"], answer: "hockey", difficulty: 1},
+    {clues: ["Pedal machine", "Two wheels", "Tour de France"], answer: "cycling", difficulty: 2},
+    {clues: ["Oval ball", "Try line", "Scrum formation"], answer: "rugby", difficulty: 3},
+    {clues: ["Iron clubs", "Tee box", "Putting green"], answer: "golf", difficulty: 1},
+    {clues: ["Net sport", "Spike motion", "Six players"], answer: "volleyball", difficulty: 2},
+    {clues: ["Gliding board", "Ocean waves", "Stand and balance"], answer: "surfing", difficulty: 2},
+    {clues: ["Racket game", "Yellow fuzzy ball", "Love means zero"], answer: "tennis", difficulty: 1},
+    {clues: ["Combat sport", "Rounds and gloves", "Knockout punch"], answer: "boxing", difficulty: 2},
+    {clues: ["Ice dancing", "Blade spins", "Olympic sport"], answer: "skating", difficulty: 2},
+    {clues: ["Mountain activity", "Ropes and peaks", "Vertical ascent"], answer: "climbing", difficulty: 3},
+    {clues: ["Track event", "Pole assist", "Bar clearance"], answer: "vaulting", difficulty: 3},
+    {clues: ["Water racing", "Lane ropes", "Freestyle stroke"], answer: "swimming", difficulty: 1},
+    {clues: ["Snow sport", "Downhill speed", "Poles in hands"], answer: "skiing", difficulty: 1},
+    {clues: ["Team sport", "Wicket guard", "Test match"], answer: "cricket", difficulty: 3}
+  ],
+  FOOD: [
+    {clues: ["Fermented cabbage", "Korean staple", "Spicy side dish"], answer: "kimchi", difficulty: 2},
+    {clues: ["Green paste", "Sushi companion", "Japanese horseradish"], answer: "wasabi", difficulty: 2},
+    {clues: ["Chickpea spread", "Middle Eastern dip", "Tahini blend"], answer: "hummus", difficulty: 2},
+    {clues: ["Grain alternative", "Andean superfood", "Protein-rich seed"], answer: "quinoa", difficulty: 3},
+    {clues: ["Smoked salmon", "Cured fish", "Bagel topping"], answer: "lox", difficulty: 2},
+    {clues: ["Seaweed wrapper", "Sushi roll", "Dried ocean plant"], answer: "nori", difficulty: 2},
+    {clues: ["Fermented soybean", "Paste or soup", "Japanese seasoning"], answer: "miso", difficulty: 2},
+    {clues: ["Indian flatbread", "Tandoor baked", "Garlic variety"], answer: "naan", difficulty: 1},
+    {clues: ["Smoked meat", "Cured beef", "Deli classic"], answer: "pastrami", difficulty: 3},
+    {clues: ["Spanish rice dish", "Saffron flavored", "Seafood mix"], answer: "paella", difficulty: 3},
+    {clues: ["Italian cheese", "Buffalo milk", "Pizza topping"], answer: "mozzarella", difficulty: 2},
+    {clues: ["French pastry", "Flaky layers", "Crescent shape"], answer: "croissant", difficulty: 2},
+    {clues: ["Spicy sauce", "Fermented chili", "Thai condiment"], answer: "sriracha", difficulty: 2},
+    {clues: ["Middle Eastern", "Chickpea balls", "Pita filling"], answer: "falafel", difficulty: 2},
+    {clues: ["Japanese noodle", "Wheat based", "Stir-fry use"], answer: "udon", difficulty: 2},
+    {clues: ["Curdled milk", "Indian cheese", "Paneer type"], answer: "ricotta", difficulty: 2},
+    {clues: ["Meat skewer", "Grilled chunks", "Turkish dish"], answer: "kebab", difficulty: 1},
+    {clues: ["Rice roll", "Vinegar rice", "Raw fish"], answer: "sushi", difficulty: 1},
+    {clues: ["Fried dough", "Spanish treat", "Cinnamon sugar"], answer: "churro", difficulty: 2},
+    {clues: ["Preserved lemon", "Moroccan spice", "Salty citrus"], answer: "pickle", difficulty: 1}
+  ],
+  HISTORY: [
+    {clues: ["Egyptian writing", "Picture symbols", "Ancient script"], answer: "hieroglyphs", difficulty: 3},
+    {clues: ["Roman arena", "Gladiator venue", "Ancient stadium"], answer: "colosseum", difficulty: 2},
+    {clues: ["Greek formation", "Shield wall", "Military tactic"], answer: "phalanx", difficulty: 3},
+    {clues: ["Mesopotamian city", "Hanging gardens", "Ancient wonder"], answer: "babylon", difficulty: 2},
+    {clues: ["Viking explorer", "Greenland settler", "Norse navigator"], answer: "erikson", difficulty: 3},
+    {clues: ["Medieval plague", "Bubonic disease", "14th century"], answer: "pestilence", difficulty: 3},
+    {clues: ["Ancient library", "Egyptian city", "Knowledge center"], answer: "alexandria", difficulty: 3},
+    {clues: ["Mongol leader", "Empire builder", "Asian conqueror"], answer: "genghis", difficulty: 2},
+    {clues: ["Stone monument", "Prehistoric circle", "English plains"], answer: "stonehenge", difficulty: 2},
+    {clues: ["Ancient wonder", "Tomb structure", "Egyptian triangle"], answer: "pyramid", difficulty: 1},
+    {clues: ["Greek city-state", "Democracy birth", "Parthenon home"], answer: "athens", difficulty: 2},
+    {clues: ["Roman emperor", "Crossed Rubicon", "Et tu Brute"], answer: "caesar", difficulty: 1},
+    {clues: ["Medieval period", "Knights era", "Castles time"], answer: "medieval", difficulty: 2},
+    {clues: ["Wooden deception", "Greek siege", "Hidden soldiers"], answer: "trojan", difficulty: 2},
+    {clues: ["Ancient empire", "Latin speakers", "Forum builders"], answer: "roman", difficulty: 1},
+    {clues: ["Egyptian ruler", "Female pharaoh", "Cleopatra type"], answer: "queen", difficulty: 1},
+    {clues: ["Ship journey", "Columbus trip", "New world"], answer: "voyage", difficulty: 2},
+    {clues: ["Medieval weapon", "Siege engine", "Stone thrower"], answer: "catapult", difficulty: 2},
+    {clues: ["Ancient scroll", "Dead Sea find", "Hebrew texts"], answer: "manuscript", difficulty: 3},
+    {clues: ["Roman road", "Stone path", "Empire network"], answer: "via", difficulty: 3}
+  ],
+  POLITICS: [
+    {clues: ["Bill rejection", "Presidential power", "Override possible"], answer: "veto", difficulty: 2},
+    {clues: ["Supreme authority", "National power", "Independence"], answer: "sovereignty", difficulty: 3},
+    {clues: ["Extended speech", "Delay tactic", "Senate procedure"], answer: "filibuster", difficulty: 3},
+    {clues: ["Government overthrow", "Sudden takeover", "Military seizure"], answer: "coup", difficulty: 2},
+    {clues: ["Voting district", "Boundary drawing", "Electoral area"], answer: "precinct", difficulty: 2},
+    {clues: ["Alliance treaty", "Defense pact", "Military coalition"], answer: "nato", difficulty: 1},
+    {clues: ["Party meeting", "Delegate selection", "Primary event"], answer: "caucus", difficulty: 2},
+    {clues: ["Official count", "Population data", "Every ten years"], answer: "census", difficulty: 2},
+    {clues: ["Trade restriction", "Economic penalty", "Political pressure"], answer: "embargo", difficulty: 2},
+    {clues: ["Formal accusation", "President's trial", "Congressional power"], answer: "impeachment", difficulty: 3},
+    {clues: ["Law proposal", "Congressional document", "Becomes act"], answer: "bill", difficulty: 1},
+    {clues: ["Voting right", "Citizen privilege", "Election access"], answer: "suffrage", difficulty: 2},
+    {clues: ["Group rule", "Majority system", "People power"], answer: "democracy", difficulty: 1},
+    {clues: ["Law maker", "Elected official", "Upper house"], answer: "senator", difficulty: 1},
+    {clues: ["Chief executive", "Oval office", "Commander role"], answer: "president", difficulty: 1},
+    {clues: ["Running person", "Election choice", "Ballot name"], answer: "candidate", difficulty: 1},
+    {clues: ["Ballot event", "Voting day", "Democracy action"], answer: "election", difficulty: 1},
+    {clues: ["Constitutional change", "Ratification needed", "Bill of Rights"], answer: "amendment", difficulty: 2},
+    {clues: ["Formal agreement", "Nation pact", "Signed accord"], answer: "treaty", difficulty: 2},
+    {clues: ["Government branch", "Law creation", "Two chambers"], answer: "congress", difficulty: 2}
+  ],
+  MATH: [
+    {clues: ["Number line", "Horizontal reference", "Graph component"], answer: "axis", difficulty: 2},
+    {clues: ["Angle measure", "Less than ninety", "Sharp corner"], answer: "acute", difficulty: 2},
+    {clues: ["Corner point", "Graph peak", "Polygon meeting"], answer: "vertex", difficulty: 3},
+    {clues: ["Mirror line", "Equal halves", "Balanced division"], answer: "symmetry", difficulty: 2},
+    {clues: ["Repeated factor", "Power notation", "Raised number"], answer: "exponent", difficulty: 2},
+    {clues: ["Curved line", "Circle piece", "Rainbow shape"], answer: "arc", difficulty: 2},
+    {clues: ["Equal sides", "Triangle type", "Two same"], answer: "isosceles", difficulty: 3},
+    {clues: ["Measure around", "Border distance", "Fence length"], answer: "perimeter", difficulty: 2},
+    {clues: ["Rate comparison", "Part to whole", "Fraction form"], answer: "ratio", difficulty: 2},
+    {clues: ["Proven statement", "Math truth", "Pythagorean example"], answer: "theorem", difficulty: 3},
+    {clues: ["Four sides", "Right angles", "Rectangle type"], answer: "square", difficulty: 1},
+    {clues: ["Round shape", "Radius constant", "Pi relation"], answer: "circle", difficulty: 1},
+    {clues: ["Three sides", "Angle sum 180", "Polygon base"], answer: "triangle", difficulty: 1},
+    {clues: ["Add together", "Total result", "Plus operation"], answer: "sum", difficulty: 1},
+    {clues: ["Times factor", "Product operation", "Repeated add"], answer: "multiply", difficulty: 1},
+    {clues: ["Take away", "Minus sign", "Difference result"], answer: "subtract", difficulty: 1},
+    {clues: ["Split evenly", "Share equally", "Quotient result"], answer: "divide", difficulty: 1},
+    {clues: ["Part of whole", "Over denominator", "Half or third"], answer: "fraction", difficulty: 1},
+    {clues: ["Out of hundred", "Symbol %", "Rate measure"], answer: "percent", difficulty: 1},
+    {clues: ["Space inside", "Length times width", "Square units"], answer: "area", difficulty: 1}
+  ]
+};
+
+// Auth
+auth.onAuthStateChanged(user => {
+  currentUser = user;
+  if (user) {
+    showScreen('categoryScreen');
+  }
+});
+
+function signInWithGoogle() {
+  const provider = new firebase.auth.GoogleAuthProvider();
+  auth.signInWithPopup(provider).catch(err => {
+    alert('Sign-in failed: ' + err.message);
+  });
+}
+
+// Generate unique room ID
+function generateRoomId() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code = '';
+  for (let i = 0; i < 6; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return code;
+}
+
+// Category selection
+async function selectCategory(category) {
+  selectedCategory = category;
+  generateQuestions(category);
+  await createRoom();
+}
+
+// Generate 20 questions with difficulty progression
+function generateQuestions(category) {
+  const bank = QUESTION_BANKS[category];
+  
+  const easy = bank.filter(q => q.difficulty === 1);
+  const medium = bank.filter(q => q.difficulty === 2);
+  const hard = bank.filter(q => q.difficulty === 3);
+  
+  questions = [
+    ...shuffleArray(easy).slice(0, 6),
+    ...shuffleArray(medium).slice(0, 8),
+    ...shuffleArray(hard).slice(0, 6)
+  ];
+  
+  questions = questions.map((q, index) => ({
+    ...q,
+    questionNumber: index + 1,
+    timeLimit: 30,
+    points: q.difficulty * 100,
+    constraints: generateConstraints(q.answer)
+  }));
+}
+
+function shuffleArray(array) {
+  const arr = [...array];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function generateConstraints(answer) {
+  const constraints = [];
+  constraints.push(`Exact length: ${answer.length}`);
+  
+  const hasDoubles = /(.)\1/.test(answer);
+  const vowels = answer.match(/[aeiou]/g) || [];
+  const hasVowel = vowels.length > 0;
+  const firstIsVowel = /[aeiou]/.test(answer[0]);
+  
+  if (!hasDoubles) constraints.push("No double letters");
+  if (hasVowel) constraints.push("Must contain at least one vowel");
+  if (firstIsVowel) constraints.push("First letter is a vowel");
+  
+  const notInWord = 'bcdfghjklmnpqrstvwxyz'.split('').filter(l => !answer.includes(l));
+  if (notInWord.length > 0) {
+    const randomLetter = notInWord[Math.floor(Math.random() * notInWord.length)];
+    constraints.push(`No letter: ${randomLetter.toUpperCase()}`);
+  }
+  
+  return constraints.slice(0, 4);
+}
+
+// Create room
+async function createRoom() {
+  roomId = generateRoomId();
+  
+  const snapshot = await database.ref(`rooms/${roomId}`).once('value');
+  if (snapshot.exists()) {
+    return createRoom();
+  }
+  
+  roomRef = database.ref(`rooms/${roomId}`);
+  await roomRef.set({
+    category: selectedCategory,
+    status: 'lobby',
+    hostId: currentUser.uid,
+    hostName: currentUser.displayName,
+    questions: questions,
+    currentQuestion: 0,
+    players: {},
+    createdAt: Date.now()
+  });
+  
+  listenForPlayers();
+  showScreen('lobbyScreen');
+  document.getElementById('roomCode').textContent = roomId;
+}
+
+// Listen for players
+function listenForPlayers() {
+  roomRef.child('players').on('value', snapshot => {
+    const players = snapshot.val() || {};
+    updatePlayersDisplay(players);
+    
+    const playerCount = Object.keys(players).length;
+    const startBtn = document.getElementById('startGameBtn');
+    startBtn.disabled = playerCount === 0;
+    startBtn.textContent = playerCount === 0 
+      ? 'Waiting for Players...' 
+      : `Start Game (${playerCount} Player${playerCount > 1 ? 's' : ''})`;
+  });
+}
+
+function updatePlayersDisplay(players) {
+  const grid = document.getElementById('playersGrid');
+  const count = document.getElementById('playerCount');
+  
+  const playerArray = Object.entries(players);
+  count.textContent = playerArray.length;
+  
+  if (playerArray.length === 0) {
+    grid.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);grid-column:1/-1">Waiting for players to join...</div>';
+  } else {
+    grid.innerHTML = playerArray.map(([id, player]) => `
+      <div class="player-card">
+        <div class="player-avatar">${(player.name || 'P')[0].toUpperCase()}</div>
+        ${player.name || 'Player'}
+      </div>
+    `).join('');
+  }
+}
+
+// Start tournament
+async function startTournament() {
+  await roomRef.update({
+    status: 'playing',
+    currentQuestion: 0,
+    startedAt: Date.now()
+  });
+  
+  showScreen('gameScreen');
+  loadQuestion(0);
+  listenForAnswers();
+}
+
+// Load question
+function loadQuestion(index) {
+  if (index >= questions.length) {
+    endTournament();
+    return;
+  }
+  
+  currentQuestionIndex = index;
+  const question = questions[index];
+  
+  document.getElementById('questionNumber').textContent = `Question ${question.questionNumber}/20`;
+  document.getElementById('questionText').textContent = question.clues.join(' • ');
+  
+  const constraintsList = document.getElementById('constraintsList');
+  constraintsList.innerHTML = question.constraints.map(c => 
+    `<div class="constraint-item">• ${c}</div>`
+  ).join('');
+  
+  roomRef.update({
+    currentQuestion: index,
+    questionStartTime: Date.now()
+  });
+  
+  startTimer(question.timeLimit);
+  updateLeaderboard();
+}
+
+function startTimer(seconds) {
+  let timeLeft = seconds;
+  const timerEl = document.getElementById('timer');
+  timerEl.classList.remove('low');
+  
+  if (timerInterval) clearInterval(timerInterval);
+  
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    timerEl.textContent = timeLeft;
+    
+    if (timeLeft <= 5) {
+      timerEl.classList.add('low');
+    }
+    
+    if (timeLeft <= 0) {
+      clearInterval(timerInterval);
+      setTimeout(() => nextQuestion(), 3000);
+    }
+  }, 1000);
+}
+
+// Answer monitoring
+function listenForAnswers() {
+  roomRef.child('players').on('value', () => {
+    updateLeaderboard();
+  });
+}
+
+function updateLeaderboard() {
+  roomRef.child('players').once('value', snapshot => {
+    const players = snapshot.val() || {};
+    const playerArray = Object.entries(players)
+      .map(([id, player]) => ({
+        id,
+        name: player.name || 'Player',
+        score: player.score || 0
+      }))
+      .sort((a, b) => b.score - a.score);
+    
+    const leaderboardEl = document.getElementById('leaderboardList');
+    
+    if (playerArray.length === 0) {
+      leaderboardEl.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)">Waiting for answers...</div>';
+    } else {
+      leaderboardEl.innerHTML = playerArray.map((player, index) => {
+        const rank = index + 1;
+        const rankClass = rank === 1 ? 'first' : rank === 2 ? 'second' : rank === 3 ? 'third' : '';
+        
+        return `
+          <div class="leaderboard-item">
+            <div class="rank ${rankClass}">${rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : '#' + rank}</div>
+            <div class="player-info">
+              <div class="player-name">${player.name}</div>
+            </div>
+            <div class="points">${player.score}</div>
+          </div>
+        `;
+      }).join('');
+    }
+  });
+}
+
+// Host controls
+function nextQuestion() {
+  if (timerInterval) clearInterval(timerInterval);
+  loadQuestion(currentQuestionIndex + 1);
+}
+
+async function endTournament() {
+  if (timerInterval) clearInterval(timerInterval);
+  
+  await roomRef.update({
+    status: 'finished',
+    endedAt: Date.now()
+  });
+  
+  showResults();
+}
+
+// Results
+async function showResults() {
+  const snapshot = await roomRef.child('players').once('value');
+  const players = snapshot.val() || {};
+  
+  const topPlayers = Object.entries(players)
+    .map(([id, player]) => ({
+      name: player.name || 'Player',
+      score: player.score || 0
+    }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3);
+  
+  const podium = document.getElementById('podium');
+  
+  if (topPlayers.length >= 2) {
+    podium.innerHTML = `
+      ${topPlayers[1] ? `
+        <div class="podium-place second">
+          <div class="podium-rank">🥈</div>
+          <div class="podium-name">${topPlayers[1].name}</div>
+          <div class="podium-score">${topPlayers[1].score}</div>
+        </div>
+      ` : ''}
+      
+      ${topPlayers[0] ? `
+        <div class="podium-place first">
+          <div class="podium-rank">🥇</div>
+          <div class="podium-name">${topPlayers[0].name}</div>
+          <div class="podium-score">${topPlayers[0].score}</div>
+        </div>
+      ` : ''}
+      
+      ${topPlayers[2] ? `
+        <div class="podium-place third">
+          <div class="podium-rank">🥉</div>
+          <div class="podium-name">${topPlayers[2].name}</div>
+          <div class="podium-score">${topPlayers[2].score}</div>
+        </div>
+      ` : ''}
+    `;
+  } else if (topPlayers.length === 1) {
+    podium.innerHTML = `
+      <div class="podium-place first">
+        <div class="podium-rank">🥇</div>
+        <div class="podium-name">${topPlayers[0].name}</div>
+        <div class="podium-score">${topPlayers[0].score}</div>
+      </div>
+    `;
+  }
+  
+  showScreen('resultsScreen');
+}
+
+// Screen management
+function showScreen(screenId) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(screenId).classList.add('active');
+}
+</script>
+
+</body>
+</html>

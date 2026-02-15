@@ -1,0 +1,2088 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>RULEOUT</title>
+
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-12KRFCZR86"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-12KRFCZR86');
+</script>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
+<style>
+:root{
+ --bg:#050b1a;
+ --panel:#0b1630;
+ --card:#0f1f45;
+ --text:#e8f0ff;
+ --muted:#8fa6ff;
+ --accent:#3b82f6;
+ --accent-soft:#60a5fa;
+ --danger:#fb7185;
+ --success:#34d399;
+}
+
+*{box-sizing:border-box}
+
+body{
+ margin:0;
+ min-height:100vh;
+ font-family:system-ui,-apple-system,Segoe UI,sans-serif;
+ background:radial-gradient(1000px 600px at top,#0f2a66,var(--bg));
+ color:var(--text);
+ overflow-x:hidden;
+}
+
+/* START */
+.start{
+ position:fixed;
+ inset:0;
+ display:flex;
+ flex-direction:column;
+ align-items:center;
+ justify-content:center;
+ gap:26px;
+ background:radial-gradient(900px 500px at center,#123a8c,#050b1a);
+}
+
+.start h1{
+ font-size:68px;
+ letter-spacing:.35em;
+}
+
+.start p{
+ max-width:560px;
+ text-align:center;
+ color:var(--muted);
+ font-size:18px;
+}
+
+.start button{
+ padding:18px 66px;
+ font-size:22px;
+ border:none;
+ border-radius:999px;
+ cursor:pointer;
+ font-weight:800;
+}
+
+.start #startPlayBtn{
+ background:linear-gradient(135deg,var(--accent),var(--accent-soft));
+ color:white;
+}
+
+/* GOOGLE SIGN IN */
+.google-signin{
+ padding:18px 66px;
+ background:linear-gradient(135deg,var(--accent),var(--accent-soft));
+ color:white;
+ border:none;
+ border-radius:999px;
+ font-size:18px;
+ font-weight:800;
+ cursor:pointer;
+ display:flex;
+ align-items:center;
+ gap:10px;
+ box-shadow:0 8px 24px rgba(0,0,0,.4);
+ transition:all .2s;
+}
+
+.google-signin:hover{
+ box-shadow:0 12px 32px rgba(0,0,0,.5);
+ transform:translateY(-2px);
+}
+
+.google-icon{
+ width:20px;
+ height:20px;
+ filter:brightness(0) invert(1);
+}
+
+/* SIGN OUT BUTTON */
+.signout-btn{
+ position:fixed;
+ top:16px;
+ left:16px;
+ padding:8px 20px;
+ background:rgba(255,255,255,.08);
+ color:var(--muted);
+ border:1px solid rgba(255,255,255,.15);
+ border-radius:6px;
+ font-size:14px;
+ font-weight:600;
+ cursor:pointer;
+ backdrop-filter:blur(10px);
+ transition:all .2s;
+ z-index:999;
+ width:auto;
+ display:inline-block;
+}
+
+.signout-btn:hover{
+ background:rgba(255,255,255,.15);
+ border-color:rgba(255,255,255,.25);
+ color:var(--text);
+}
+
+/* HELP BUTTON */
+.help-btn{
+ position:fixed;
+ bottom:16px;
+ left:16px;
+ width:40px;
+ height:40px;
+ background:rgba(59,130,246,.2);
+ color:var(--accent-soft);
+ border:2px solid var(--accent);
+ border-radius:50%;
+ font-size:20px;
+ font-weight:800;
+ cursor:pointer;
+ backdrop-filter:blur(10px);
+ transition:all .2s;
+ z-index:1000;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+}
+
+.help-btn:hover{
+ background:rgba(59,130,246,.3);
+ transform:scale(1.1);
+}
+
+.help-btn:disabled{
+ opacity:.3;
+ cursor:not-allowed;
+ transform:scale(1);
+}
+
+/* GUESS HISTORY */
+.guess-history{
+ margin-top:24px;
+ padding:20px;
+ background:rgba(0,0,0,.2);
+ border-radius:12px;
+ border:2px solid rgba(59,130,246,.2);
+}
+
+.guess-history h4{
+ font-size:14px;
+ color:var(--muted);
+ margin-bottom:12px;
+ text-transform:uppercase;
+ letter-spacing:.1em;
+}
+
+.guess-item{
+ display:flex;
+ gap:6px;
+ margin-bottom:10px;
+}
+
+.letter-box{
+ width:40px;
+ height:40px;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ font-size:20px;
+ font-weight:900;
+ border-radius:6px;
+ border:2px solid rgba(255,255,255,.2);
+ text-transform:uppercase;
+}
+
+.letter-box.correct{
+ background:#34d399;
+ border-color:#34d399;
+ color:white;
+}
+
+.letter-box.wrong-position{
+ background:#f59e0b;
+ border-color:#f59e0b;
+ color:white;
+}
+
+.letter-box.not-in-word{
+ background:#4b5563;
+ border-color:#4b5563;
+ color:#9ca3af;
+}
+
+/* WIN ANIMATION */
+@keyframes confetti{
+ 0%{transform:translateY(0) rotate(0deg);opacity:1}
+ 100%{transform:translateY(100vh) rotate(360deg);opacity:0}
+}
+
+.confetti-particle{
+ position:fixed;
+ width:10px;
+ height:10px;
+ pointer-events:none;
+ z-index:9999;
+}
+
+/* DIFFICULTY SELECTOR */
+.difficulty-selector{
+ display:flex;
+ gap:12px;
+ margin-bottom:24px;
+ justify-content:center;
+}
+
+.diff-btn{
+ padding:12px 24px;
+ background:rgba(59,130,246,.1);
+ border:2px solid rgba(59,130,246,.3);
+ border-radius:12px;
+ color:var(--text);
+ font-size:16px;
+ font-weight:700;
+ cursor:pointer;
+ transition:all .3s;
+ text-transform:uppercase;
+ letter-spacing:.05em;
+}
+
+.diff-btn:hover{
+ background:rgba(59,130,246,.2);
+ border-color:var(--accent);
+}
+
+.diff-btn.active{
+ background:var(--accent);
+ border-color:var(--accent);
+ color:white;
+}
+
+.diff-btn.easy{border-color:#34d399}
+.diff-btn.easy.active{background:#34d399;border-color:#34d399}
+
+.diff-btn.hard{border-color:#f59e0b}
+.diff-btn.hard.active{background:#f59e0b;border-color:#f59e0b}
+
+.diff-btn.extreme{border-color:#fb7185}
+.diff-btn.extreme.active{background:#fb7185;border-color:#fb7185}
+
+/* SHOP BUTTON */
+.shop-btn{
+ position:fixed;
+ top:16px;
+ right:16px;
+ padding:8px 20px;
+ background:linear-gradient(135deg,#f59e0b,#f97316);
+ border:none;
+ border-radius:6px;
+ color:white;
+ font-size:14px;
+ font-weight:700;
+ cursor:pointer;
+ transition:all .2s;
+ z-index:999;
+ box-shadow:0 2px 8px rgba(245,158,11,.3);
+ width:auto;
+ display:inline-block;
+}
+
+.shop-btn:hover{
+ transform:translateY(-2px);
+ box-shadow:0 4px 12px rgba(245,158,11,.5);
+}
+
+/* SHOP MODAL */
+.shop-modal{
+ position:fixed;
+ inset:0;
+ background:rgba(0,0,0,.8);
+ backdrop-filter:blur(10px);
+ display:none;
+ align-items:center;
+ justify-content:center;
+ z-index:2000;
+ padding:20px;
+ overflow-y:auto;
+}
+
+.shop-modal.active{display:flex}
+
+.shop-container{
+ background:linear-gradient(180deg,var(--card),var(--panel));
+ border-radius:24px;
+ padding:40px;
+ max-width:1200px;
+ width:100%;
+ max-height:90vh;
+ overflow-y:auto;
+ box-shadow:0 24px 72px rgba(0,0,0,.6);
+}
+
+.shop-header{
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+ margin-bottom:32px;
+ padding-bottom:20px;
+ border-bottom:3px solid rgba(59,130,246,.2);
+}
+
+.shop-title{
+ font-size:42px;
+ font-weight:900;
+ background:linear-gradient(135deg,#f59e0b,#f97316);
+ -webkit-background-clip:text;
+ -webkit-text-fill-color:transparent;
+}
+
+.shop-close{
+ width:40px;
+ height:40px;
+ border:none;
+ background:rgba(255,255,255,.1);
+ color:var(--text);
+ border-radius:8px;
+ font-size:24px;
+ cursor:pointer;
+ transition:all .3s;
+}
+
+.shop-close:hover{
+ background:rgba(255,255,255,.2);
+ transform:rotate(90deg);
+}
+
+.shop-points{
+ display:flex;
+ align-items:center;
+ gap:12px;
+ padding:16px 24px;
+ background:linear-gradient(135deg,var(--success),#10b981);
+ border-radius:16px;
+ margin-bottom:32px;
+}
+
+.shop-points-label{
+ font-size:18px;
+ font-weight:700;
+ opacity:.9;
+}
+
+.shop-points-value{
+ font-size:32px;
+ font-weight:900;
+}
+
+.shop-tier{
+ margin-bottom:40px;
+}
+
+.tier-header{
+ font-size:24px;
+ font-weight:900;
+ margin-bottom:20px;
+ text-transform:uppercase;
+ letter-spacing:.1em;
+}
+
+.tier-header.common{color:#9ca3af}
+.tier-header.rare{color:#3b82f6}
+.tier-header.epic{color:#8b5cf6}
+.tier-header.legendary{color:#f59e0b}
+
+.shop-items{
+ display:grid;
+ grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+ gap:16px;
+}
+
+.shop-item{
+ background:rgba(255,255,255,.03);
+ border:2px solid;
+ border-radius:16px;
+ padding:20px;
+ transition:all .3s;
+ cursor:pointer;
+}
+
+.shop-item:hover{
+ transform:translateY(-4px);
+ box-shadow:0 8px 24px rgba(0,0,0,.4);
+}
+
+.shop-item.common{border-color:#9ca3af}
+.shop-item.rare{border-color:#3b82f6}
+.shop-item.epic{border-color:#8b5cf6}
+.shop-item.legendary{border-color:#f59e0b}
+
+.shop-item:hover.common{box-shadow:0 8px 24px rgba(156,163,175,.4)}
+.shop-item:hover.rare{box-shadow:0 8px 24px rgba(59,130,246,.4)}
+.shop-item:hover.epic{box-shadow:0 8px 24px rgba(139,92,246,.4)}
+.shop-item:hover.legendary{box-shadow:0 8px 24px rgba(245,158,11,.4)}
+
+.item-name{
+ font-size:18px;
+ font-weight:800;
+ margin-bottom:8px;
+}
+
+.item-desc{
+ font-size:14px;
+ color:var(--muted);
+ margin-bottom:16px;
+ line-height:1.6;
+}
+
+.item-footer{
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+}
+
+.item-price{
+ font-size:20px;
+ font-weight:900;
+ color:var(--success);
+}
+
+.item-buy-btn{
+ padding:8px 20px;
+ border:none;
+ border-radius:8px;
+ background:linear-gradient(135deg,var(--accent),var(--accent-soft));
+ color:white;
+ font-size:14px;
+ font-weight:800;
+ cursor:pointer;
+ transition:all .3s;
+ text-transform:uppercase;
+}
+
+.item-buy-btn:hover:not(:disabled){
+ transform:scale(1.05);
+ box-shadow:0 4px 12px rgba(59,130,246,.4);
+}
+
+.item-buy-btn:disabled{
+ opacity:.3;
+ cursor:not-allowed;
+}
+
+.item-owned{
+ display:flex;
+ align-items:center;
+ gap:8px;
+ font-size:14px;
+ color:var(--success);
+ font-weight:700;
+}
+
+/* INVENTORY */
+.inventory-section{
+ margin-top:40px;
+ padding-top:40px;
+ border-top:3px solid rgba(59,130,246,.2);
+}
+
+.inventory-grid{
+ display:grid;
+ grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+ gap:16px;
+}
+
+.inventory-item{
+ background:rgba(59,130,246,.1);
+ border:2px solid var(--accent);
+ border-radius:12px;
+ padding:16px;
+ text-align:center;
+}
+
+.inventory-item-name{
+ font-size:16px;
+ font-weight:700;
+ margin-bottom:8px;
+}
+
+.inventory-item-count{
+ font-size:24px;
+ font-weight:900;
+ color:var(--success);
+ margin-bottom:12px;
+}
+
+.inventory-use-btn{
+ width:100%;
+ padding:8px;
+ background:var(--accent);
+ border:none;
+ border-radius:8px;
+ color:white;
+ font-weight:700;
+ cursor:pointer;
+ transition:all .3s;
+}
+
+.inventory-use-btn:hover{
+ background:var(--accent-soft);
+ transform:translateY(-2px);
+}
+
+/* PURCHASE SUCCESS ANIMATION */
+@keyframes purchaseSuccess{
+ 0%{transform:scale(0.8);opacity:0}
+ 50%{transform:scale(1.1)}
+ 100%{transform:scale(1);opacity:1}
+}
+
+.purchase-success{
+ animation:purchaseSuccess .5s ease;
+}
+
+.success-message{
+ position:fixed;
+ top:50%;
+ left:50%;
+ transform:translate(-50%,-50%);
+ background:linear-gradient(135deg,var(--success),#10b981);
+ padding:24px 48px;
+ border-radius:16px;
+ font-size:24px;
+ font-weight:900;
+ color:white;
+ z-index:3000;
+ box-shadow:0 12px 40px rgba(52,211,153,.6);
+ animation:purchaseSuccess .5s ease;
+}
+
+/* GAME */
+.game{display:none;padding:42px;min-height:100vh}
+
+.container{
+ max-width:1100px;
+ margin:0 auto;
+}
+
+/* PROGRESS BAR */
+.progress-section{
+ margin-bottom:32px;
+ background:linear-gradient(180deg,var(--card),var(--panel));
+ padding:24px 34px;
+ border-radius:24px;
+ box-shadow:0 16px 32px rgba(0,0,0,.3);
+}
+
+.category-title{
+ font-size:24px;
+ font-weight:900;
+ color:var(--accent-soft);
+ margin-bottom:12px;
+ text-transform:uppercase;
+ letter-spacing:.1em;
+}
+
+.tier-display{
+ display:flex;
+ align-items:center;
+ gap:16px;
+ margin-bottom:20px;
+ padding:16px;
+ background:rgba(59,130,246,.1);
+ border-radius:16px;
+ border:2px solid rgba(59,130,246,.3);
+}
+
+.tier-badge{
+ width:80px;
+ height:80px;
+ object-fit:contain;
+}
+
+.tier-info{
+ flex:1;
+}
+
+.tier-name{
+ font-size:28px;
+ font-weight:900;
+ margin-bottom:4px;
+}
+
+.tier-name.bronze{color:#cd7f32}
+.tier-name.silver{color:#c0c0c0}
+.tier-name.gold{color:#ffd700}
+.tier-name.platinum{color:#00ffff}
+
+.tier-progress{
+ font-size:14px;
+ color:var(--muted);
+ margin-bottom:8px;
+}
+
+.tier-bar{
+ width:100%;
+ height:8px;
+ background:rgba(0,0,0,.3);
+ border-radius:999px;
+ overflow:hidden;
+}
+
+.tier-fill{
+ height:100%;
+ background:linear-gradient(90deg,var(--accent),var(--accent-soft));
+ transition:width .3s ease;
+ border-radius:999px;
+}
+
+.stats-row{
+ display:flex;
+ gap:32px;
+ align-items:center;
+ flex-wrap:wrap;
+}
+
+.stat{
+ display:flex;
+ flex-direction:column;
+ gap:4px;
+}
+
+.stat-label{
+ font-size:12px;
+ color:var(--muted);
+ text-transform:uppercase;
+ letter-spacing:.05em;
+}
+
+.stat-value{
+ font-size:32px;
+ font-weight:900;
+ color:var(--success);
+}
+
+.progress-bar{
+ width:100%;
+ height:12px;
+ background:rgba(0,0,0,.3);
+ border-radius:999px;
+ overflow:hidden;
+ margin-top:16px;
+}
+
+.progress-fill{
+ height:100%;
+ background:linear-gradient(90deg,var(--accent),var(--accent-soft));
+ transition:width .3s ease;
+ border-radius:999px;
+}
+
+/* PUZZLE AREA */
+.puzzle-grid{
+ display:grid;
+ grid-template-columns:1.3fr .7fr;
+ gap:44px;
+ margin-bottom:32px;
+}
+
+.card{
+ background:linear-gradient(180deg,var(--card),var(--panel));
+ padding:34px;
+ border-radius:24px;
+ box-shadow:0 32px 64px rgba(0,0,0,.45);
+}
+
+.clue{
+ font-size:19px;
+ margin-bottom:16px;
+ line-height:1.6;
+}
+
+.constraints{
+ color:var(--danger);
+ line-height:1.8;
+ font-size:15px;
+ margin-bottom:26px;
+}
+
+.counter{
+ font-size:34px;
+ font-weight:900;
+ color:var(--accent-soft);
+}
+
+/* INPUT */
+input{
+ width:100%;
+ padding:18px;
+ font-size:20px;
+ border-radius:16px;
+ border:none;
+ outline:none;
+ background:#020617;
+ color:var(--text);
+ text-align:center;
+}
+
+button{
+ width:100%;
+ padding:18px;
+ margin-top:16px;
+ border-radius:16px;
+ border:none;
+ font-weight:900;
+ cursor:pointer;
+}
+
+.submit{background:var(--accent);color:white}
+.next{background:#1e293b;color:var(--muted);display:none}
+
+.message{
+ margin-top:20px;
+ min-height:32px;
+ text-align:center;
+ font-size:16px;
+}
+
+/* SUCCESS CELEBRATION */
+.success-overlay{
+ position:fixed;
+ inset:0;
+ display:flex;
+ flex-direction:column;
+ align-items:center;
+ justify-content:center;
+ gap:20px;
+ background:rgba(16,185,129,.15);
+ backdrop-filter:blur(8px);
+ z-index:999;
+ animation:fadeIn .3s ease;
+}
+
+.success-text{
+ font-size:84px;
+ font-weight:900;
+ letter-spacing:.25em;
+ color:var(--success);
+ text-shadow:0 0 30px rgba(16,185,129,.5);
+ animation:pop 2.5s ease forwards;
+}
+
+.points-earned{
+ font-size:48px;
+ font-weight:800;
+ color:var(--accent-soft);
+ animation:slideUp .5s ease .3s both;
+}
+
+.confetti{
+ position:absolute;
+ width:10px;
+ height:10px;
+ background:var(--success);
+ animation:confettiFall 2s ease-out forwards;
+}
+
+@keyframes fadeIn{
+ from{opacity:0}
+ to{opacity:1}
+}
+
+@keyframes pop{
+ 0%{opacity:0;transform:scale(.6)}
+ 15%{opacity:1;transform:scale(1.1)}
+ 85%{opacity:1;transform:scale(1)}
+ 100%{opacity:0;transform:scale(1.05)}
+}
+
+@keyframes slideUp{
+ from{opacity:0;transform:translateY(30px)}
+ to{opacity:1;transform:translateY(0)}
+}
+
+@keyframes confettiFall{
+ to{
+  transform:translateY(100vh) rotate(360deg);
+  opacity:0;
+ }
+}
+
+@media(max-width:768px){
+ .puzzle-grid{grid-template-columns:1fr}
+ .stats-row{justify-content:space-between}
+}
+</style>
+</head>
+
+<body>
+
+<div class="start" id="start">
+ <h1>RULEOUT</h1>
+ <p>Decode the clues. Follow the rules. Guess the word. 5 attempts to crack each puzzle. New challenges daily.</p>
+ <button id="startPlayBtn" style="display:none" onclick="startGame()">▶ PLAY SOLO</button>
+ <button id="hostBtn" style="display:none;margin-top:12px;background:linear-gradient(135deg,#f59e0b,#f97316)" onclick="window.open('https://harrisonhenry633-max.github.io/HOSTPAGE/', '_blank')">🎮 HOST TOURNAMENT</button>
+ <button id="joinBtn" style="display:none;margin-top:12px;background:linear-gradient(135deg,#8b5cf6,#7c3aed)" onclick="window.open('https://harrisonhenry633-max.github.io/JOINPAGE/', '_blank')">🎯 JOIN TOURNAMENT</button>
+ <button class="google-signin" id="authBtn" onclick="handleAuth()">
+  <svg class="google-icon" viewBox="0 0 24 24">
+   <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+   <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+   <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+   <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+  </svg>
+  <span id="authText">Sign in with Google</span>
+ </button>
+</div>
+
+<div class="game" id="game">
+ <button class="signout-btn" id="signoutBtn" style="display:none" onclick="signOut()">Sign out</button>
+ <button class="help-btn" id="helpBtn" onclick="getHint()" title="Get an extra clue">?</button>
+ <button class="shop-btn" onclick="openShop()">Shop</button>
+ 
+ <div class="container">
+  
+  <!-- PROGRESS SECTION -->
+  <div class="progress-section">
+   <div class="category-title" id="categoryTitle">STATS</div>
+   
+   <!-- TIER SYSTEM -->
+   <div class="tier-display">
+    <img class="tier-badge" id="tierBadge" src="https://i.imgur.com/placeholder.png" alt="Tier Badge">
+    <div class="tier-info">
+     <div class="tier-name" id="tierName">BRONZE 1</div>
+     <div class="tier-progress" id="tierProgress">0 / 500 points to Silver 1</div>
+     <div class="tier-bar">
+      <div class="tier-fill" id="tierFill" style="width:0%"></div>
+     </div>
+    </div>
+   </div>
+   
+   <div class="stats-row">
+    <div class="stat">
+     <div class="stat-label">Total Points</div>
+     <div class="stat-value" id="totalPoints">0</div>
+    </div>
+    <div class="stat">
+     <div class="stat-label">Streak</div>
+     <div class="stat-value" id="streakDisplay">0</div>
+    </div>
+    <div class="stat">
+     <div class="stat-label">Puzzle</div>
+     <div class="stat-value" id="puzzleNum">1/5</div>
+    </div>
+   </div>
+   <div class="progress-bar">
+    <div class="progress-fill" id="progressFill" style="width:0%"></div>
+   </div>
+  </div>
+
+  <!-- PUZZLE -->
+  <div class="puzzle-grid">
+   <div class="card">
+    <div style="font-size:14px;color:var(--accent-soft);font-weight:700;margin-bottom:12px;text-transform:uppercase" id="currentCategoryDisplay">SPORTS</div>
+    
+    <!-- Difficulty Selector -->
+    <div class="difficulty-selector" id="difficultySelector">
+     <button class="diff-btn easy" onclick="setDifficulty('easy')">Easy</button>
+     <button class="diff-btn active" onclick="setDifficulty('normal')">Normal</button>
+     <button class="diff-btn hard" onclick="setDifficulty('hard')">Hard</button>
+     <button class="diff-btn extreme" onclick="setDifficulty('extreme')">Extreme</button>
+    </div>
+    
+    <div class="clue" id="clue"></div>
+    <div class="constraints" id="constraints"></div>
+    <div class="counter" id="counter"></div>
+   </div>
+
+   <div class="card">
+    <input id="guess" placeholder="Type the word that fits"/>
+    <button class="submit" onclick="submitGuess()">Submit</button>
+    <div class="message" id="message"></div>
+    
+    <!-- Guess History -->
+    <div class="guess-history" id="guessHistory" style="display:none">
+     <h4>Your Guesses</h4>
+     <div id="guessHistoryList"></div>
+    </div>
+   </div>
+  </div>
+
+ </div>
+</div>
+
+<div class="start" id="victory" style="display:none">
+ <h1 style="font-size:72px;color:var(--success);text-shadow:0 0 40px rgba(52,211,153,.6)">🎉</h1>
+ <h2 style="font-size:48px;margin:0">YOU BEAT RULEOUT!</h2>
+ <p style="font-size:24px;color:var(--accent-soft);margin:20px 0">Final Score: <span id="finalScore" style="font-weight:900">0</span> points</p>
+ <button style="background:linear-gradient(135deg,var(--success),#10b981);color:white" onclick="playAgain()">▶ PLAY AGAIN</button>
+</div>
+
+<!-- SHOP MODAL -->
+<div class="shop-modal" id="shopModal">
+ <div class="shop-container">
+  <div class="shop-header">
+   <div class="shop-title">🛒 SHOP</div>
+   <button class="shop-close" onclick="closeShop()">✕</button>
+  </div>
+  
+  <div class="shop-points">
+   <span class="shop-points-label">Your Points:</span>
+   <span class="shop-points-value" id="shopPoints">0</span>
+  </div>
+  
+  <div id="shopItems"></div>
+  
+  <div class="inventory-section">
+   <h2 class="tier-header">📦 Your Inventory</h2>
+   <div class="inventory-grid" id="inventoryGrid"></div>
+  </div>
+ </div>
+</div>
+
+<script>
+// ============================================
+// FIREBASE CONFIG
+// ============================================
+const firebaseConfig = {
+  apiKey: "AIzaSyDpncc72bVroaBydIlfk4f4Il0ag0dPPP0",
+  authDomain: "ruleout-14bdb.firebaseapp.com",
+  projectId: "ruleout-14bdb",
+  databaseURL: "https://ruleout-14bdb-default-rtdb.firebaseio.com",
+  storageBucket: "ruleout-14bdb.firebasestorage.app",
+  messagingSenderId: "497779197134",
+  appId: "1:497779197134:web:3194021bd696fa1b437c9f",
+  measurementId: "G-7BBMSV6GZJ"
+};
+
+let auth = null;
+let currentUser = null;
+let authReady = false;
+let db = null;
+
+try {
+  firebase.initializeApp(firebaseConfig);
+  auth = firebase.auth();
+  db = firebase.database();
+  
+  auth.onAuthStateChanged(async (user) => {
+    currentUser = user;
+    authReady = true;
+    updateAuthButton();
+    
+    // Load points immediately when user signs in (even if game not started)
+    if (user) {
+      await loadProgress();
+      // Always update tier display, even if points are 0
+      updateTierDisplay();
+    }
+  });
+} catch (error) {
+  console.log('Firebase initialization error:', error);
+  authReady = true;
+  updateAuthButton();
+}
+
+function updateAuthButton() {
+  if (!authReady) return;
+  
+  const authBtn = document.getElementById('authBtn');
+  const playBtn = document.getElementById('startPlayBtn');
+  const hostBtn = document.getElementById('hostBtn');
+  const joinBtn = document.getElementById('joinBtn');
+  const signoutBtn = document.getElementById('signoutBtn');
+  
+  if (currentUser) {
+    authBtn.style.display = 'none';
+    playBtn.style.display = 'flex';
+    hostBtn.style.display = 'flex';
+    joinBtn.style.display = 'flex';
+    if(signoutBtn) signoutBtn.style.display = 'block';
+  } else {
+    authBtn.style.display = 'flex';
+    playBtn.style.display = 'none';
+    hostBtn.style.display = 'none';
+    joinBtn.style.display = 'none';
+    if(signoutBtn) signoutBtn.style.display = 'none';
+  }
+}
+
+function signOut() {
+  if (auth && currentUser) {
+    auth.signOut().then(() => {
+      // Clear localStorage
+      localStorage.removeItem('ruleout_progress');
+      // Reload the page to reset everything
+      window.location.reload();
+    });
+  }
+}
+
+function handleAuth() {
+  if (!auth) {
+    alert('Firebase authentication error. Check console for details.');
+    return;
+  }
+  
+  if (currentUser) {
+    auth.signOut();
+  } else {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    auth.signInWithPopup(provider)
+      .then((result) => {
+        console.log('Signed in:', result.user.displayName);
+      })
+      .catch((error) => {
+        console.error('Sign-in error:', error);
+        alert('Sign-in failed: ' + error.message);
+      });
+  }
+}
+
+// ============================================
+// GAME CODE
+// ============================================
+
+const WORD_CATEGORIES = [
+  {
+    name: "SPORTS",
+    words: [
+      {clues: ["Racket sport", "Shuttlecock flies", "Fast-paced rally"], a: "badminton"},
+      {clues: ["Winter sliding", "Flat on stomach", "Icy track"], a: "luge"},
+      {clues: ["Bow weapon", "Target practice", "Robin Hood skill"], a: "archery"},
+      {clues: ["Ring combat", "Submission holds", "Greco-Roman style"], a: "wrestling"},
+      {clues: ["Water blade", "Stand up motion", "Lake gliding"], a: "kayak"},
+      {clues: ["Vault apparatus", "Balance beam", "Floor routine"], a: "gymnastics"},
+      {clues: ["Stick and puck", "Face-off circle", "Penalty box"], a: "hockey"},
+      {clues: ["Pedal machine", "Two wheels", "Tour de France"], a: "cycling"},
+      {clues: ["Oval ball", "Try line", "Scrum formation"], a: "rugby"},
+      {clues: ["Iron clubs", "Tee box", "Putting green"], a: "golf"}
+    ]
+  },
+  {
+    name: "FOOD",
+    words: [
+      {clues: ["Fermented cabbage", "Korean staple", "Spicy side dish"], a: "kimchi"},
+      {clues: ["Green paste", "Sushi companion", "Japanese horseradish"], a: "wasabi"},
+      {clues: ["Chickpea spread", "Middle Eastern dip", "Tahini blend"], a: "hummus"},
+      {clues: ["Grain alternative", "Andean superfood", "Protein-rich seed"], a: "quinoa"},
+      {clues: ["Smoked salmon", "Cured fish", "Bagel topping"], a: "lox"},
+      {clues: ["Seaweed wrapper", "Sushi roll", "Dried ocean plant"], a: "nori"},
+      {clues: ["Fermented soybean", "Paste or soup", "Japanese seasoning"], a: "miso"},
+      {clues: ["Indian flatbread", "Tandoor baked", "Garlic variety"], a: "naan"},
+      {clues: ["Smoked meat", "Cured beef", "Deli classic"], a: "pastrami"},
+      {clues: ["Spanish rice dish", "Saffron flavored", "Seafood mix"], a: "paella"}
+    ]
+  },
+  {
+    name: "HISTORY",
+    words: [
+      {clues: ["Egyptian writing", "Picture symbols", "Ancient script"], a: "hieroglyphs"},
+      {clues: ["Roman arena", "Gladiator venue", "Ancient stadium"], a: "colosseum"},
+      {clues: ["Greek formation", "Shield wall", "Military tactic"], a: "phalanx"},
+      {clues: ["Mesopotamian city", "Hanging gardens", "Ancient wonder"], a: "babylon"},
+      {clues: ["Viking explorer", "Greenland settler", "Norse navigator"], a: "erikson"},
+      {clues: ["Aztec capital", "Lake city", "Modern Mexico"], a: "tenochtitlan"},
+      {clues: ["Medieval plague", "Bubonic disease", "14th century"], a: "pestilence"},
+      {clues: ["Ancient library", "Egyptian city", "Knowledge center"], a: "alexandria"},
+      {clues: ["Mongol leader", "Empire builder", "Asian conqueror"], a: "genghis"},
+      {clues: ["Stone monument", "Prehistoric circle", "English plains"], a: "stonehenge"}
+    ]
+  },
+  {
+    name: "POLITICS",
+    words: [
+      {clues: ["Bill rejection", "Presidential power", "Override possible"], a: "veto"},
+      {clues: ["Supreme authority", "National power", "Independence"], a: "sovereignty"},
+      {clues: ["Extended speech", "Delay tactic", "Senate procedure"], a: "filibuster"},
+      {clues: ["Government overthrow", "Sudden takeover", "Military seizure"], a: "coup"},
+      {clues: ["Voting district", "Boundary drawing", "Electoral area"], a: "precinct"},
+      {clues: ["Alliance treaty", "Defense pact", "Military coalition"], a: "nato"},
+      {clues: ["Party meeting", "Delegate selection", "Primary event"], a: "caucus"},
+      {clues: ["Official count", "Population data", "Every ten years"], a: "census"},
+      {clues: ["Trade restriction", "Economic penalty", "Political pressure"], a: "embargo"},
+      {clues: ["Formal accusation", "President's trial", "Congressional power"], a: "impeachment"}
+    ]
+  },
+  {
+    name: "MATH",
+    words: [
+      {clues: ["Number line", "Horizontal reference", "Graph component"], a: "axis"},
+      {clues: ["Angle measure", "Less than ninety", "Sharp corner"], a: "acute"},
+      {clues: ["Corner point", "Graph peak", "Polygon meeting"], a: "vertex"},
+      {clues: ["Mirror line", "Equal halves", "Balanced division"], a: "symmetry"},
+      {clues: ["Repeated factor", "Power notation", "Raised number"], a: "exponent"},
+      {clues: ["Curved line", "Circle piece", "Rainbow shape"], a: "arc"},
+      {clues: ["Equal sides", "Equilateral type", "Regular polygon"], a: "isosceles"},
+      {clues: ["Measure around", "Border distance", "Fence length"], a: "perimeter"},
+      {clues: ["Rate comparison", "Part to whole", "Fraction form"], a: "ratio"},
+      {clues: ["Angle sum", "Triangle rule", "180 degrees"], a: "theorem"}
+    ]
+  }
+];
+
+const maxGuesses = 5;
+let puzzles = [];
+let categoryIndex = 0;
+let puzzleIndex = 0;
+let guessesLeft = 5;
+let constraints = [];
+let currentCategory = "";
+let totalPoints = 0;
+let streak = 0;
+let hintUsed = false;
+let guessHistory = [];
+let currentDifficulty = 'normal';
+let difficultyLocked = false;
+let difficultyChanges = 0;
+
+// Shop system
+let inventory = {};
+let activeProtections = {
+  streakProtector: false,
+  megaProtector: false,
+  streakShield: 0,
+  streakSaver: false,
+  safeGuess: false
+};
+
+// Shop items database
+const SHOP_ITEMS = {
+  common: [
+    {id: 'streak_protector', name: 'Streak Protector', price: 250, desc: 'Prevents streak loss once'},
+    {id: 'hint', name: 'Hint', price: 400, desc: 'Reveals first letter'},
+    {id: 'letter_reveal', name: 'Letter Reveal', price: 500, desc: 'Reveals 1 random letter'},
+    {id: 'extra_attempt', name: 'Extra Attempt', price: 750, desc: '+1 guess to current puzzle'}
+  ],
+  rare: [
+    {id: 'triple_reveal', name: 'Triple Letter Reveal', price: 1400, desc: 'Reveals 3 letters at once'},
+    {id: 'puzzle_skip', name: 'Puzzle Skip', price: 1500, desc: 'Skip current puzzle (no points)'},
+    {id: 'golden_hint', name: 'Golden Hint', price: 1600, desc: 'Premium first letter hint'},
+    {id: 'streak_shield', name: 'Streak Shield', price: 1200, desc: 'Protects streak 3 times'}
+  ],
+  epic: [
+    {id: 'mega_protector', name: 'Mega Streak Protector', price: 2500, desc: 'Protects streak 5 times'},
+    {id: 'half_reveal', name: 'Half Reveal', price: 2800, desc: 'Reveals first half of word'}
+  ],
+  legendary: [
+    {id: 'perfect_solve', name: 'Perfect Solve Token', price: 3600, desc: 'Instant correct answer'},
+    {id: 'auto_solve', name: 'Auto Solve Boost', price: 3200, desc: 'Auto-complete puzzle'},
+    {id: 'streak_saver', name: 'Streak Saver Pass', price: 3000, desc: 'Save streak on failure once'}
+  ]
+};
+
+// Load inventory from localStorage
+function loadInventory() {
+  const saved = localStorage.getItem('ruleout_inventory');
+  if (saved) {
+    inventory = JSON.parse(saved);
+  }
+}
+
+// Save inventory to localStorage
+function saveInventory() {
+  localStorage.setItem('ruleout_inventory', JSON.stringify(inventory));
+}
+
+// Open shop modal
+function openShop() {
+  document.getElementById('shopModal').classList.add('active');
+  document.getElementById('shopPoints').textContent = totalPoints;
+  renderShopItems();
+  renderInventory();
+}
+
+// Close shop modal
+function closeShop() {
+  document.getElementById('shopModal').classList.remove('active');
+}
+
+// Render shop items
+function renderShopItems() {
+  const container = document.getElementById('shopItems');
+  container.innerHTML = '';
+  
+  Object.entries(SHOP_ITEMS).forEach(([tier, items]) => {
+    const tierDiv = document.createElement('div');
+    tierDiv.className = 'shop-tier';
+    
+    const tierHeader = document.createElement('h3');
+    tierHeader.className = `tier-header ${tier}`;
+    tierHeader.textContent = tier.toUpperCase() + ' TIER';
+    tierDiv.appendChild(tierHeader);
+    
+    const itemsGrid = document.createElement('div');
+    itemsGrid.className = 'shop-items';
+    
+    items.forEach(item => {
+      const itemDiv = document.createElement('div');
+      itemDiv.className = `shop-item ${tier}`;
+      
+      const owned = inventory[item.id] || 0;
+      
+      itemDiv.innerHTML = `
+        <div class="item-name">${item.name}</div>
+        <div class="item-desc">${item.desc}</div>
+        <div class="item-footer">
+          <div class="item-price">${item.price} pts</div>
+          ${owned > 0 
+            ? `<div class="item-owned">✓ Owned (${owned})</div>`
+            : `<button class="item-buy-btn" onclick="buyItem('${item.id}', ${item.price})" ${totalPoints < item.price ? 'disabled' : ''}>
+                BUY
+              </button>`
+          }
+        </div>
+      `;
+      
+      itemsGrid.appendChild(itemDiv);
+    });
+    
+    tierDiv.appendChild(itemsGrid);
+    container.appendChild(tierDiv);
+  });
+}
+
+// Buy item
+function buyItem(itemId, price) {
+  if (totalPoints < price) {
+    showMessage('❌ Not enough points!', 'var(--danger)');
+    return;
+  }
+  
+  // Deduct points
+  totalPoints -= price;
+  
+  // Add to inventory
+  inventory[itemId] = (inventory[itemId] || 0) + 1;
+  
+  // Save
+  saveProgress();
+  saveInventory();
+  updateStats();
+  
+  // Show success
+  showSuccessMessage('✓ Purchased!');
+  
+  // Refresh shop
+  document.getElementById('shopPoints').textContent = totalPoints;
+  renderShopItems();
+  renderInventory();
+}
+
+// Show success message
+function showSuccessMessage(text) {
+  const msg = document.createElement('div');
+  msg.className = 'success-message';
+  msg.textContent = text;
+  document.body.appendChild(msg);
+  
+  setTimeout(() => msg.remove(), 1500);
+}
+
+// Show message helper
+function showMessage(text, color) {
+  message.textContent = text;
+  message.style.color = color;
+}
+
+// Render inventory
+function renderInventory() {
+  const container = document.getElementById('inventoryGrid');
+  container.innerHTML = '';
+  
+  const hasItems = Object.keys(inventory).some(key => inventory[key] > 0);
+  
+  if (!hasItems) {
+    container.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:var(--muted);padding:40px">No items yet. Buy something from the shop!</p>';
+    return;
+  }
+  
+  Object.entries(inventory).forEach(([itemId, count]) => {
+    if (count === 0) return;
+    
+    // Find item details
+    let itemData = null;
+    Object.values(SHOP_ITEMS).forEach(tier => {
+      const found = tier.find(i => i.id === itemId);
+      if (found) itemData = found;
+    });
+    
+    if (!itemData) return;
+    
+    const itemDiv = document.createElement('div');
+    itemDiv.className = 'inventory-item';
+    itemDiv.innerHTML = `
+      <div class="inventory-item-name">${itemData.name}</div>
+      <div class="inventory-item-count">×${count}</div>
+      <button class="inventory-use-btn" onclick="useItem('${itemId}')">USE</button>
+    `;
+    container.appendChild(itemDiv);
+  });
+}
+
+// Use item
+function useItem(itemId) {
+  if (!inventory[itemId] || inventory[itemId] === 0) return;
+  
+  // Item effects
+  switch(itemId) {
+    case 'streak_protector':
+      activeProtections.streakProtector = true;
+      showMessage('🛡️ Streak Protector activated! Will save your streak once.', 'var(--success)');
+      inventory[itemId]--;
+      break;
+      
+    case 'mega_protector':
+      activeProtections.megaProtector = true;
+      showMessage('🛡️ Mega Protector activated! Will save your streak 5 times.', 'var(--success)');
+      inventory[itemId]--;
+      break;
+      
+    case 'streak_shield':
+      activeProtections.streakShield = 3;
+      showMessage('🛡️ Streak Shield activated! 3 protections ready.', 'var(--success)');
+      inventory[itemId]--;
+      break;
+      
+    case 'streak_saver':
+      activeProtections.streakSaver = true;
+      showMessage('🛡️ Streak Saver Pass activated! Your streak is safe.', 'var(--success)');
+      inventory[itemId]--;
+      break;
+      
+    case 'hint':
+    case 'golden_hint':
+      if (!hintUsed && puzzles[puzzleIndex]) {
+        const answer = puzzles[puzzleIndex].a;
+        message.textContent = `💡 Hint: Word starts with "${answer[0].toUpperCase()}"`;
+        message.style.color = 'var(--accent-soft)';
+        hintUsed = true;
+        inventory[itemId]--;
+      } else {
+        showMessage('⚠️ Hint already used this puzzle', 'var(--warning)');
+        closeShop();
+        return;
+      }
+      break;
+      
+    case 'letter_reveal':
+      if (puzzles[puzzleIndex]) {
+        const answer = puzzles[puzzleIndex].a;
+        const randomIndex = Math.floor(Math.random() * answer.length);
+        message.textContent = `✨ Letter ${randomIndex + 1} is: ${answer[randomIndex].toUpperCase()}`;
+        message.style.color = 'var(--success)';
+        inventory[itemId]--;
+      }
+      break;
+      
+    case 'triple_reveal':
+      if (puzzles[puzzleIndex]) {
+        const answer = puzzles[puzzleIndex].a;
+        const revealed = [0, Math.floor(answer.length/2), answer.length-1].map(i => answer[i].toUpperCase());
+        message.textContent = `✨ Letters: ${revealed.join(', ')}`;
+        message.style.color = 'var(--success)';
+        inventory[itemId]--;
+      }
+      break;
+      
+    case 'half_reveal':
+      if (puzzles[puzzleIndex]) {
+        const answer = puzzles[puzzleIndex].a;
+        const half = answer.substring(0, Math.ceil(answer.length/2));
+        message.textContent = `✨ First half: ${half.toUpperCase()}`;
+        message.style.color = 'var(--success)';
+        inventory[itemId]--;
+      }
+      break;
+      
+    case 'extra_attempt':
+      guessesLeft++;
+      update();
+      showMessage('✓ +1 guess added!', 'var(--success)');
+      inventory[itemId]--;
+      break;
+      
+    case 'puzzle_skip':
+      showMessage('⏭️ Skipping puzzle...', 'var(--warning)');
+      inventory[itemId]--;
+      setTimeout(() => nextPuzzle(), 1000);
+      break;
+      
+    case 'perfect_solve':
+    case 'auto_solve':
+      if (puzzles[puzzleIndex]) {
+        guess.value = puzzles[puzzleIndex].a;
+        showMessage('🎯 Answer revealed!', 'var(--success)');
+        inventory[itemId]--;
+        setTimeout(() => submitGuess(), 500);
+      }
+      break;
+      
+    default:
+      showMessage('⚠️ Item not found', 'var(--danger)');
+      return;
+  }
+  
+  saveInventory();
+  saveProgress();
+  closeShop();
+}
+
+// Difficulty settings
+const DIFFICULTY_SETTINGS = {
+  easy: {maxGuesses: 7, pointMultiplier: 0.5, hintsAllowed: 3},
+  normal: {maxGuesses: 5, pointMultiplier: 1, hintsAllowed: 1},
+  hard: {maxGuesses: 3, pointMultiplier: 1.5, hintsAllowed: 0},
+  extreme: {maxGuesses: 2, pointMultiplier: 2, hintsAllowed: 0}
+};
+
+// Tier system configuration
+const TIER_SYSTEM = [
+  {name: "BRONZE 1", class: "bronze", minPoints: 0, maxPoints: 499, badge: "bronze1.png"},
+  {name: "BRONZE 2", class: "bronze", minPoints: 500, maxPoints: 999, badge: "bronze2.png"},
+  {name: "BRONZE 3", class: "bronze", minPoints: 1000, maxPoints: 1999, badge: "bronze3.png"},
+  {name: "SILVER 1", class: "silver", minPoints: 2000, maxPoints: 2999, badge: "silver1.png"},
+  {name: "SILVER 2", class: "silver", minPoints: 3000, maxPoints: 3999, badge: "silver2.png"},
+  {name: "SILVER 3", class: "silver", minPoints: 4000, maxPoints: 5999, badge: "silver3.png"},
+  {name: "GOLD 1", class: "gold", minPoints: 6000, maxPoints: 7999, badge: "gold1.png"},
+  {name: "GOLD 2", class: "gold", minPoints: 8000, maxPoints: 9999, badge: "gold2.png"},
+  {name: "GOLD 3", class: "gold", minPoints: 10000, maxPoints: 12999, badge: "gold3.png"},
+  {name: "PLATINUM 1", class: "platinum", minPoints: 13000, maxPoints: 15999, badge: "platinum1.png"},
+  {name: "PLATINUM 2", class: "platinum", minPoints: 16000, maxPoints: 19999, badge: "platinum2.png"},
+  {name: "PLATINUM 3", class: "platinum", minPoints: 20000, maxPoints: Infinity, badge: "platinum3.png"}
+];
+
+function getCurrentTier(points) {
+  for (let i = TIER_SYSTEM.length - 1; i >= 0; i--) {
+    if (points >= TIER_SYSTEM[i].minPoints) {
+      return TIER_SYSTEM[i];
+    }
+  }
+  return TIER_SYSTEM[0];
+}
+
+function getNextTier(points) {
+  const currentTier = getCurrentTier(points);
+  const currentIndex = TIER_SYSTEM.indexOf(currentTier);
+  if (currentIndex < TIER_SYSTEM.length - 1) {
+    return TIER_SYSTEM[currentIndex + 1];
+  }
+  return null;
+}
+
+function updateTierDisplay() {
+  const tierNameEl = document.getElementById('tierName');
+  if (!tierNameEl) return; // Elements not loaded yet
+  
+  const currentTier = getCurrentTier(totalPoints);
+  const nextTier = getNextTier(totalPoints);
+  
+  // Update tier name
+  tierNameEl.textContent = currentTier.name;
+  tierNameEl.className = `tier-name ${currentTier.class}`;
+  
+  // Placeholder badge - will be replaced when you upload real images
+  const badgeEl = document.getElementById('tierBadge');
+  if (badgeEl) {
+    badgeEl.src = `badges/${currentTier.badge}`;
+    badgeEl.onerror = function() {
+      // Fallback to colored placeholder
+      this.style.display = 'none';
+    };
+  }
+  
+  // Update progress
+  const progressEl = document.getElementById('tierProgress');
+  const fillEl = document.getElementById('tierFill');
+  
+  if (progressEl && fillEl) {
+    if (nextTier) {
+      const pointsInTier = totalPoints - currentTier.minPoints;
+      const tierRange = nextTier.minPoints - currentTier.minPoints;
+      const progress = (pointsInTier / tierRange) * 100;
+      
+      progressEl.textContent = `${totalPoints} / ${nextTier.minPoints} points to ${nextTier.name}`;
+      fillEl.style.width = progress + '%';
+    } else {
+      progressEl.textContent = 'MAX TIER ACHIEVED!';
+      fillEl.style.width = '100%';
+    }
+  }
+}
+
+function seed(){
+ const d = new Date();
+ return d.getFullYear() * 1000 + d.getMonth() * 50 + d.getDate();
+}
+
+function rng(s){
+ return () => (s = (s * 9301 + 49297) % 233280) / 233280;
+}
+
+async function startGame(){
+ document.getElementById("start").style.display = "none";
+ document.getElementById("game").style.display = "block";
+ 
+ loadInventory(); // Load shop inventory
+ 
+ const loaded = await loadProgress();
+ if (!loaded) {
+   categoryIndex = 0;
+   puzzleIndex = 0;
+   guessesLeft = maxGuesses;
+   streak = 0;
+   // Don't reset totalPoints - they should persist!
+ }
+ 
+ setup();
+ load();
+ updateStats();
+}
+
+function setup(){
+ if (categoryIndex >= WORD_CATEGORIES.length) {
+   showVictoryScreen();
+   return;
+ }
+ 
+ currentCategory = WORD_CATEGORIES[categoryIndex].name;
+ puzzles = WORD_CATEGORIES[categoryIndex].words;
+}
+
+function genConstraints(ans){
+ const valid = [];
+ valid.push(`Exact length: ${ans.length}`);
+ 
+ const hasConsecutiveDoubles = /(.)\1/.test(ans);
+ const vowels = ans.match(/[aeiou]/g) || [];
+ const hasVowel = vowels.length > 0;
+ const firstLetter = ans[0];
+ const lastLetter = ans[ans.length - 1];
+ const firstIsVowel = /[aeiou]/.test(firstLetter);
+ const lastIsVowel = /[aeiou]/.test(lastLetter);
+ 
+ // Only add constraints that are TRUE for the answer
+ if(!hasConsecutiveDoubles) valid.push("No consecutive double letters");
+ if(hasVowel) valid.push("Must contain at least one vowel");
+ if(firstIsVowel) valid.push("First letter is a vowel");
+ if(lastIsVowel) valid.push("Last letter is a vowel");
+ 
+ // Add a "No letter: X" constraint for a letter NOT in the word
+ const notInWord = 'bcdfghjklmnpqrstvwxyz'.split('').filter(l => !ans.includes(l));
+ if(notInWord.length > 0) {
+  const r = rng(seed() + puzzleIndex);
+  const randomLetter = notInWord[Math.floor(r() * notInWord.length)];
+  valid.push(`No letter: ${randomLetter.toUpperCase()}`);
+ }
+ 
+ return valid.slice(0, 4);
+}
+
+function violates(w){
+ for(const r of constraints){
+  if(r.startsWith("Exact length") && w.length != +r.split(": ")[1]) return "Wrong length";
+  if(r === "No consecutive double letters" && /(.)\1/.test(w)) return "No consecutive doubles allowed";
+  if(r === "Must contain at least one vowel" && !/[aeiou]/.test(w)) return "Needs a vowel";
+  if(r.startsWith("No letter:")){
+   const l = r.split(": ")[1].toLowerCase();
+   if(w.includes(l)) return `Contains forbidden letter: ${l.toUpperCase()}`;
+  }
+  if(r === "First letter is a vowel" && !/^[aeiou]/.test(w)) return "Must start with vowel";
+  if(r === "Last letter is a vowel" && !/[aeiou]$/.test(w)) return "Must end with vowel";
+ }
+ return null;
+}
+
+function update(){
+ counter.textContent = `Guesses left: ${guessesLeft}`;
+}
+
+function getHint(){
+ if(hintUsed) return;
+ 
+ const settings = DIFFICULTY_SETTINGS[currentDifficulty];
+ if(settings.hintsAllowed === 0) {
+   message.textContent = "❌ No hints allowed in this difficulty!";
+   message.style.color = "var(--danger)";
+   return;
+ }
+ 
+ hintUsed = true;
+ const answer = puzzles[puzzleIndex].a;
+ const firstLetter = answer[0].toUpperCase();
+ 
+ message.textContent = `💡 Hint: The word starts with "${firstLetter}"`;
+ message.style.color = "var(--accent-soft)";
+ 
+ // Disable the help button
+ document.getElementById('helpBtn').disabled = true;
+ 
+ // Deduct 50 points for using hint
+ totalPoints = Math.max(0, totalPoints - 50);
+ updateStats();
+ saveProgress();
+}
+
+function setDifficulty(diff) {
+  // Check if difficulty is locked
+  if (difficultyLocked) {
+    message.textContent = "🔒 Difficulty is locked! You can only change it once before starting.";
+    message.style.color = "var(--danger)";
+    return;
+  }
+  
+  currentDifficulty = diff;
+  difficultyChanges++;
+  
+  // Lock after first change
+  if (difficultyChanges >= 1) {
+    difficultyLocked = true;
+    message.textContent = `Difficulty set to ${diff.toUpperCase()} and LOCKED! Next puzzle: ${DIFFICULTY_SETTINGS[diff].maxGuesses} guesses`;
+    message.style.color = "var(--warning)";
+    
+    // Disable other difficulty buttons
+    document.querySelectorAll('.diff-btn').forEach(btn => {
+      if(btn.textContent.toLowerCase() !== diff) {
+        btn.disabled = true;
+        btn.style.opacity = '0.3';
+        btn.style.cursor = 'not-allowed';
+      }
+    });
+  } else {
+    message.textContent = `Difficulty: ${diff.toUpperCase()} - One more change allowed before lock`;
+    message.style.color = "var(--accent-soft)";
+  }
+  
+  // Update button states
+  document.querySelectorAll('.diff-btn').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  event.target.classList.add('active');
+  
+  saveProgress();
+}
+
+function updateStats(){
+ document.getElementById('categoryTitle').textContent = 'STATS';
+ document.getElementById('totalPoints').textContent = totalPoints;
+ document.getElementById('streakDisplay').textContent = streak;
+ document.getElementById('puzzleNum').textContent = `${categoryIndex + 1}/${WORD_CATEGORIES.length} - ${puzzleIndex + 1}/${puzzles.length}`;
+ 
+ const totalPuzzles = WORD_CATEGORIES.reduce((sum, cat) => sum + cat.words.length, 0);
+ let completedPuzzles = 0;
+ for(let c = 0; c < categoryIndex; c++) {
+   completedPuzzles += WORD_CATEGORIES[c].words.length;
+ }
+ completedPuzzles += puzzleIndex;
+ 
+ const progress = (completedPuzzles / totalPuzzles) * 100;
+ document.getElementById('progressFill').style.width = progress + '%';
+ 
+ updateTierDisplay();
+}
+
+function submitGuess(){
+ const w = guess.value.toLowerCase().trim();
+ if(!w) return;
+
+ guessesLeft--;
+ update();
+
+ const err = violates(w);
+ guess.value = "";
+
+ if(err){
+  message.textContent = "❌ " + err;
+  message.style.color = "var(--danger)";
+  if(guessesLeft === 0) fail();
+  return;
+ }
+
+ const answer = puzzles[puzzleIndex].a;
+ 
+ // Add to guess history with color feedback
+ addGuessToHistory(w, answer);
+ 
+ if(w === answer){
+  win();
+ }else{
+  message.textContent = "❌ Wrong word";
+  message.style.color = "var(--danger)";
+  if(guessesLeft === 0) fail();
+ }
+ 
+ saveProgress();
+}
+
+function addGuessToHistory(guess, answer) {
+  const feedback = getLetterFeedback(guess, answer);
+  guessHistory.push({word: guess, feedback});
+  
+  const historyDiv = document.getElementById('guessHistory');
+  const listDiv = document.getElementById('guessHistoryList');
+  
+  historyDiv.style.display = 'block';
+  
+  const guessItem = document.createElement('div');
+  guessItem.className = 'guess-item';
+  
+  for(let i = 0; i < guess.length; i++) {
+    const letterBox = document.createElement('div');
+    letterBox.className = `letter-box ${feedback[i]}`;
+    letterBox.textContent = guess[i];
+    guessItem.appendChild(letterBox);
+  }
+  
+  listDiv.appendChild(guessItem);
+}
+
+function getLetterFeedback(guess, answer) {
+  const feedback = [];
+  const answerArr = answer.split('');
+  const guessArr = guess.split('');
+  
+  // First pass: mark correct positions
+  for(let i = 0; i < guessArr.length; i++) {
+    if(guessArr[i] === answerArr[i]) {
+      feedback[i] = 'correct';
+      answerArr[i] = null; // Mark as used
+    }
+  }
+  
+  // Second pass: mark wrong positions
+  for(let i = 0; i < guessArr.length; i++) {
+    if(feedback[i] === 'correct') continue;
+    
+    const index = answerArr.indexOf(guessArr[i]);
+    if(index !== -1) {
+      feedback[i] = 'wrong-position';
+      answerArr[index] = null;
+    } else {
+      feedback[i] = 'not-in-word';
+    }
+  }
+  
+  return feedback;
+}
+
+function win(){
+ // Calculate points with difficulty multiplier
+ const settings = DIFFICULTY_SETTINGS[currentDifficulty];
+ const basePoints = 100 - ((guessHistory.length) * 10);
+ const pointsEarned = Math.floor(basePoints * settings.pointMultiplier);
+ 
+ totalPoints += pointsEarned;
+ streak++;
+ 
+ // Streak bonus
+ let bonusPoints = 0;
+ if(streak === 3) bonusPoints = 20;
+ if(streak === 5) bonusPoints = 50;
+ if(streak >= 10) bonusPoints = Math.floor(pointsEarned * 0.5);
+ 
+ if(bonusPoints > 0) {
+   totalPoints += bonusPoints;
+ }
+ 
+ // Create confetti
+ createConfetti();
+ 
+ // Create success overlay
+ const overlay = document.createElement("div");
+ overlay.className = "success-overlay";
+ 
+ const successText = document.createElement("div");
+ successText.className = "success-text";
+ successText.textContent = "CORRECT!";
+ 
+ const pointsText = document.createElement("div");
+ pointsText.className = "points-earned";
+ pointsText.textContent = `+${pointsEarned} points${bonusPoints > 0 ? ' (+' + bonusPoints + ' streak bonus!)' : ''}`;
+ 
+ overlay.appendChild(successText);
+ overlay.appendChild(pointsText);
+ 
+ document.body.appendChild(overlay);
+ 
+ setTimeout(() => {
+  overlay.remove();
+  nextPuzzle();
+ }, 2500);
+}
+
+function createConfetti() {
+  const colors = ['#34d399', '#3b82f6', '#fb7185', '#f59e0b', '#8b5cf6'];
+  
+  for(let i = 0; i < 50; i++) {
+    const confetti = document.createElement('div');
+    confetti.className = 'confetti-particle';
+    confetti.style.left = Math.random() * 100 + 'vw';
+    confetti.style.top = '-10px';
+    confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+    confetti.style.animation = `confetti ${Math.random() * 2 + 2}s linear forwards`;
+    confetti.style.animationDelay = Math.random() * 0.5 + 's';
+    
+    document.body.appendChild(confetti);
+    
+    setTimeout(() => confetti.remove(), 4000);
+  }
+}
+
+function fail(){
+ // Check for active streak protections
+ if (activeProtections.streakProtector) {
+   activeProtections.streakProtector = false;
+   message.textContent = `🛡️ Streak Protector saved your streak! (${streak})`;
+   message.style.color = 'var(--success)';
+   saveInventory();
+ } else if (activeProtections.streakShield > 0) {
+   activeProtections.streakShield--;
+   message.textContent = `🛡️ Streak Shield saved your streak! (${activeProtections.streakShield} left)`;
+   message.style.color = 'var(--success)';
+   saveInventory();
+ } else if (activeProtections.megaProtector) {
+   // Mega protector works 5 times
+   if (!activeProtections.megaProtectorUses) activeProtections.megaProtectorUses = 5;
+   activeProtections.megaProtectorUses--;
+   if (activeProtections.megaProtectorUses <= 0) {
+     activeProtections.megaProtector = false;
+     activeProtections.megaProtectorUses = 0;
+   }
+   message.textContent = `🛡️ Mega Protector saved your streak! (${activeProtections.megaProtectorUses} uses left)`;
+   message.style.color = 'var(--success)';
+   saveInventory();
+ } else if (activeProtections.streakSaver) {
+   activeProtections.streakSaver = false;
+   message.textContent = `🛡️ Streak Saver Pass saved your streak!`;
+   message.style.color = 'var(--success)';
+   saveInventory();
+ } else {
+   // No protection - streak lost
+   streak = 0;
+ }
+ 
+ const answer = puzzles[puzzleIndex].a.toUpperCase();
+ message.textContent = `❌ Out of guesses! The answer was: ${answer}`;
+ message.style.color = "var(--danger)";
+ 
+ // Show answer in guess history
+ const historyDiv = document.getElementById('guessHistory');
+ const listDiv = document.getElementById('guessHistoryList');
+ historyDiv.style.display = 'block';
+ 
+ const answerDiv = document.createElement('div');
+ answerDiv.style.marginTop = '16px';
+ answerDiv.style.padding = '12px';
+ answerDiv.style.background = 'rgba(52,211,153,.1)';
+ answerDiv.style.borderRadius = '8px';
+ answerDiv.style.border = '2px solid #34d399';
+ answerDiv.innerHTML = `<strong style="color:#34d399">Correct Answer:</strong> <span style="font-size:20px;font-weight:900">${answer}</span>`;
+ listDiv.appendChild(answerDiv);
+ 
+ setTimeout(() => {
+  nextPuzzle();
+ }, 3000);
+}
+
+function nextPuzzle(){
+ puzzleIndex++;
+ 
+ // Check if we completed this category
+ if(puzzleIndex >= puzzles.length){
+  categoryIndex++;
+  puzzleIndex = 0;
+  
+  // Check if we beat the entire game
+  if(categoryIndex >= WORD_CATEGORIES.length){
+   showVictoryScreen();
+   return;
+  }
+  
+  // Move to next category
+  setup();
+ }
+ 
+ load();
+ updateStats();
+}
+
+function showVictoryScreen(){
+ document.getElementById("game").style.display = "none";
+ const victory = document.getElementById("victory");
+ victory.style.display = "flex";
+ document.getElementById("finalScore").textContent = totalPoints;
+}
+
+function load(){
+ const settings = DIFFICULTY_SETTINGS[currentDifficulty];
+ guessesLeft = settings.maxGuesses;
+ hintUsed = false;
+ guessHistory = [];
+ 
+ clue.textContent = puzzles[puzzleIndex].clues.join(" • ");
+ constraints = genConstraints(puzzles[puzzleIndex].a);
+ constraintsEl.innerHTML = constraints.map(r => "• " + r).join("<br>");
+ message.textContent = "";
+ message.style.color = "";
+ 
+ // Clear guess history
+ document.getElementById('guessHistory').style.display = 'none';
+ document.getElementById('guessHistoryList').innerHTML = '';
+ 
+ // Re-enable help button
+ const helpBtn = document.getElementById('helpBtn');
+ if(helpBtn) helpBtn.disabled = false;
+ 
+ // Update category display
+ document.getElementById('currentCategoryDisplay').textContent = currentCategory;
+ 
+ update();
+ saveProgress();
+}
+
+function saveProgress() {
+  const progress = {
+    categoryIndex: categoryIndex,
+    puzzleIndex: puzzleIndex,
+    guesses: guessesLeft,
+    category: currentCategory,
+    points: totalPoints,
+    streak: streak,
+    hintUsed: hintUsed,
+    difficulty: currentDifficulty,
+    difficultyLocked: difficultyLocked,
+    difficultyChanges: difficultyChanges
+  };
+  
+  // Save to localStorage as backup
+  localStorage.setItem('ruleout_progress', JSON.stringify(progress));
+  
+  // Save to Firebase Realtime Database if user is signed in
+  if (currentUser && db) {
+    db.ref('users/' + currentUser.uid + '/progress').set(progress)
+      .catch((error) => {
+        console.error('Error saving to Firebase:', error);
+      });
+  }
+}
+
+async function loadProgress() {
+  // Try Firebase Realtime Database first if user is signed in
+  if (currentUser && db) {
+    try {
+      const snapshot = await db.ref('users/' + currentUser.uid + '/progress').once('value');
+      if (snapshot.exists()) {
+        const progress = snapshot.val();
+        
+        categoryIndex = progress.categoryIndex || 0;
+        puzzleIndex = progress.puzzleIndex || 0;
+        guessesLeft = progress.guesses || 5;
+        currentCategory = progress.category || "";
+        totalPoints = progress.points || 0;
+        streak = progress.streak || 0;
+        hintUsed = progress.hintUsed || false;
+        currentDifficulty = progress.difficulty || 'normal';
+        difficultyLocked = progress.difficultyLocked || false;
+        difficultyChanges = progress.difficultyChanges || 0;
+        
+        // Update difficulty button and lock state
+        updateDifficultyButton();
+        
+        // Update help button state
+        if(hintUsed) {
+          const helpBtn = document.getElementById('helpBtn');
+          if(helpBtn) helpBtn.disabled = true;
+        }
+        
+        return true;
+      }
+    } catch (error) {
+      console.error('Error loading from Firebase:', error);
+    }
+  }
+  
+  // Fall back to localStorage
+  const saved = localStorage.getItem('ruleout_progress');
+  if (saved) {
+    const progress = JSON.parse(saved);
+    
+    categoryIndex = progress.categoryIndex || 0;
+    puzzleIndex = progress.puzzleIndex || 0;
+    guessesLeft = progress.guesses || 5;
+    currentCategory = progress.category || "";
+    totalPoints = progress.points || 0;
+    streak = progress.streak || 0;
+    hintUsed = progress.hintUsed || false;
+    currentDifficulty = progress.difficulty || 'normal';
+    difficultyLocked = progress.difficultyLocked || false;
+    difficultyChanges = progress.difficultyChanges || 0;
+    
+    // Update difficulty button and lock state
+    updateDifficultyButton();
+    
+    // Update help button state
+    if(hintUsed) {
+      const helpBtn = document.getElementById('helpBtn');
+      if(helpBtn) helpBtn.disabled = true;
+    }
+    
+    return true;
+  }
+  return false;
+}
+
+function updateDifficultyButton() {
+  document.querySelectorAll('.diff-btn').forEach(btn => {
+    btn.classList.remove('active');
+    const btnDiff = btn.textContent.toLowerCase();
+    
+    if(btnDiff === currentDifficulty) {
+      btn.classList.add('active');
+    }
+    
+    // Apply lock state
+    if(difficultyLocked && btnDiff !== currentDifficulty) {
+      btn.disabled = true;
+      btn.style.opacity = '0.3';
+      btn.style.cursor = 'not-allowed';
+    }
+  });
+}
+
+const clue = document.getElementById("clue");
+const constraintsEl = document.getElementById("constraints");
+const counter = document.getElementById("counter");
+const message = document.getElementById("message");
+const guess = document.getElementById("guess");
+
+function playAgain(){
+  // Reset game progress but KEEP totalPoints for tier progression
+  categoryIndex = 0;
+  puzzleIndex = 0;
+  guessesLeft = maxGuesses;
+  streak = 0;
+  hintUsed = false;
+  // totalPoints stays - this is your overall rank/tier score!
+  
+  // Update saved data with reset game but keeping points
+  saveProgress();
+  
+  // Restart game
+  document.getElementById("victory").style.display = "none";
+  document.getElementById("game").style.display = "block";
+  setup();
+  load();
+  updateStats();
+}
+</script>
+
+</body>
+</html>
